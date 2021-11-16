@@ -1,0 +1,23 @@
+from setuptools import find_packages, setup
+
+from pbrl import __version__
+
+setup(
+    name='pbrl',
+    version=__version__,
+    description='PBRL: A General Reinforcement Learning Library based on PyTorch',
+    author='jjccero',
+    url='https://github.com/jjccero/pbrl',
+    license='MIT',
+    python_requires='>=3.7',
+    packages=find_packages(),
+    install_requires=[
+        'pyglet',
+        'gym',
+        'numpy>=1.19',
+        'cloudpickle',  # fn
+        'tensorboard',
+        'tensorboardx',
+        'torch'
+    ]
+)
