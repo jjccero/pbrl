@@ -2,25 +2,22 @@ import time
 from typing import Optional, Dict
 
 import numpy as np
-from pbrl.core.buffer import PGBuffer
+
+from pbrl.algorithms.td3.buffer import ReplayBuffer
+from pbrl.algorithms.td3.policy import TD3Policy
 from pbrl.env.env import VectorEnv
-from pbrl.policy.policy import PGPolicy
 
 
 class Runner:
     def __init__(
             self,
             env: VectorEnv,
-            policy: PGPolicy,
-            buffer_size: Optional[int] = None,
-            episode_num: Optional[int] = None,
+            policy: TD3Policy,
             render: Optional[float] = None,
     ):
         self.env = env
         self.env_num = env.env_num
         self.policy = policy
-        self.buffer_size = buffer_size
-        self.episode_num = episode_num
         self.observations = None
         self.states_actor = None
         self.episode_rewards = np.zeros(self.env_num)
@@ -29,7 +26,7 @@ class Runner:
 
     def reset(self):
         self.observations = self.env.reset()
-        if self.policy.use_rnn:
+        if self.policy.rnn:
             self.states_actor = None
         self.episode_rewards[:] = 0.
         self.returns[:] = 0.
@@ -38,24 +35,19 @@ class Runner:
             self.env.render()
             time.sleep(self.render)
 
-    def run(self, buffer: Optional[PGBuffer] = None) -> Dict:
+    def run(self, buffer_size=0, buffer: Optional[ReplayBuffer] = None, episode_num=0) -> Dict:
         timestep = 0
         episode = 0
         episode_rewards = []
         episode_infos = []
         update = buffer is not None
 
-        if update:
-            self.policy.train()
-        else:
-            self.policy.eval()
-
         while True:
             observations = self.policy.normalize_observations(self.observations, update)
-            actions, log_probs, self.states_actor = self.policy.step(
-                observations,  # normalized obs
-                self.states_actor
-            )
+            if update:
+                actions, self.states_actor = self.policy.step(observations, self.states_actor)
+            else:
+                actions, self.states_actor = self.policy.act(observations, self.states_actor)
             actions_ = self.policy.wrap_actions(actions)
             self.observations, rewards, dones, infos = self.env.step(actions_)
 
@@ -68,11 +60,12 @@ class Runner:
 
             if update:
                 rewards = self.policy.normalize_rewards(self.returns, rewards, update=True)
+                observations_next = self.policy.normalize_observations(self.observations, update=False)
                 # add to buffer
                 buffer.append(
                     observations,  # normalized obs
                     actions,  # raw action
-                    log_probs,
+                    observations_next,  # normalized obs_next
                     rewards,  # normalized reward
                     dones
                 )
@@ -80,14 +73,8 @@ class Runner:
             for i in range(self.env_num):
                 if dones[i]:
                     episode += 1
-                    if self.policy.use_rnn:
-                        if isinstance(self.states_actor, tuple):
-                            # lstm
-                            for states_ in self.states_actor:
-                                states_[:, i, :] = 0.
-                        else:
-                            # gru
-                            self.states_actor[:, i, :] = 0.
+                    if self.policy.rnn:
+                        self.policy.reset_state(self.states_actor, i)
                     episode_rewards.append(self.episode_rewards[i])
                     episode_infos.append(infos[i])
                     self.episode_rewards[i] = 0.
@@ -95,9 +82,7 @@ class Runner:
                     if update:
                         self.returns[i] = 0.0
 
-            if episode >= self.episode_num if self.episode_num else timestep >= self.buffer_size:
-                if update:
-                    buffer.observations_next = self.policy.normalize_observations(self.observations, update=False)
+            if (buffer_size and timestep >= buffer_size) or (episode_num and episode >= episode_num):
                 break
 
         return dict(

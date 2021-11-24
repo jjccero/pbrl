@@ -6,10 +6,8 @@ import numpy as np
 class PGBuffer:
     def __init__(
             self,
-            mini_batch_size: int,
             chunk_len: Optional[int]
     ):
-        self.mini_batch_size = mini_batch_size
         self.chunk_len = chunk_len
         self.step = 0
         self.observations = []
@@ -37,14 +35,14 @@ class PGBuffer:
         self.dones.append(dones)
         self.step += 1
 
-    def generator(self):
+    def generator(self, batch_size: int):
         env_num = self.observations_next.shape[0]
         if self.chunk_len:
             assert self.step % self.chunk_len == 0
-            assert self.mini_batch_size % self.chunk_len == 0
+            assert batch_size % self.chunk_len == 0
             chunk_size = self.step // self.chunk_len
-            batch_size = chunk_size * env_num
-            mini_batch_size = self.mini_batch_size // self.chunk_len
+            buffer_size = chunk_size * env_num
+            batch_size = batch_size // self.chunk_len
 
             # process RNN chunk
             def to_rnn_chunk(arr):
@@ -65,24 +63,23 @@ class PGBuffer:
                 (self.observations, self.actions, self.advantages, self.log_probs_old, self.returns, self.dones)
             )
         else:
-            batch_size = self.step * env_num
-            mini_batch_size = self.mini_batch_size
+            buffer_size = self.step * env_num
             observations, actions, advantages, log_probs_old, returns = map(
                 np.concatenate,
                 (self.observations, self.actions, self.advantages, self.log_probs_old, self.returns)
             )
             dones = None
 
-        indices = np.arange(batch_size)
+        indices = np.arange(buffer_size)
         np.random.shuffle(indices)
         start = 0
-        while start < batch_size:
-            if start + 2 * mini_batch_size <= batch_size:
-                index = indices[start:start + mini_batch_size]
-                start += mini_batch_size
+        while start < buffer_size:
+            if start + 2 * batch_size <= buffer_size:
+                index = indices[start:start + batch_size]
+                start += batch_size
             else:
                 index = indices[start:]
-                start = batch_size
+                start = buffer_size
             batch_rnn = (dones[index],) if self.chunk_len else None
             yield (arr[index] for arr in (observations, actions, advantages, log_probs_old, returns)), batch_rnn
 

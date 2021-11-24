@@ -20,7 +20,6 @@ Make sure your Conda environment is activated before installing following requir
 git clone https://github.com/jjccero/pbrl.git
 cd pbrl
 pip install -e .
-cd example
 ```
 
 ### Examples
@@ -28,6 +27,7 @@ cd example
 Train and evaluate CartPole-v0 agent:
 
 ```
+cd examples/ppo
 python train.py 
 python eval.py
 ```
@@ -40,7 +40,7 @@ python eval.py --env Walker2d-v3 --obs_norm
 ``` 
 
 Use Recurrent Neural Network:  
-`python train.py --chunk_len 4`
+`python train.py --chunk_len 4 --rnn lstm`
 
 Use Population Based Training:  
 `python train_pbt.py`
@@ -54,11 +54,10 @@ Then you can access the training information by visiting http://localhost:6006/ 
 
 * [examples/](/examples)
 * [pbrl/](/pbrl)
+    * [algorithms/](/pbrl/algorithms)
+        * [ppo/](/pbrl/algorithms/ppo) Proximal Policy Optimization
+        * [td3/](/pbrl/algorithms/td3) Twin Delayed Deep Deterministic Policy Gradient
     * [competitive/](/pbrl/competitive) Multi-agent support
-    * [core/](/pbrl/core)
-        * [buffer.py](/pbrl/core/buffer.py) on-policy buffer of data collecting
-        * [ppo.py](/pbrl/core/ppo.py) Proximal Policy Optimization algorithm
-        * [runner.py](/pbrl/core/runner.py) training and testing scheduler
     * [env/](/pbrl/env)
         * [env.py](/pbrl/env/env.py) wrapped vector environment
         * [test.py](/pbrl/env/test.py) test
@@ -70,32 +69,12 @@ Then you can access the training information by visiting http://localhost:6006/ 
 
 ## Algorithm
 
-### Proximal Policy Optimization (PPO)
+### PPO's Tricks
 
 * Parallel collecting
+* Learning rate decay
 * Generalized Advantage Estimation (GAE)
-* CNN and RNN (Gate Recurrent Unit)
 * Observation Normalization and Reward Scaling (RunningMeanStd)
-
-### Hyperparameter
-
-|hyperparameter|note|
-|---|---|
-|chunk_len|BPTT for GRU (default to None)|
-|eps|clipping coefficient|
-|gamma|discount factor|
-|gae_lambda|trade-off between Temporal-Difference and Monte-Carlo|
-|entropy_coef|coefficient of entropy|
-|vf_coef|coefficient of critic|
-|repeat|learning times for data|
-|adv_norm|advantage normalization|
-|obs_norm|observation normalization (default to False)|
-|reward_norm|reward scaling (default to False)|
-|value_clip|value clipping (only when reward_norm)|
-|recompute_adv|recompute advantage|
-|lr|learning rate|
-|grad_norm|gradient clipping (L2)|
-|weight_decay|weight decay (L2)|
 
 ### Population Based Training (PBT)
 
@@ -132,7 +111,7 @@ Before you customize your own multi-agent games, extends the base class **_Compe
 * **_after_done()_** This method will be called after each episode is done.
 
 ```
-cd pbrl/example
+cd examples/ppo
 python train_competitive.py
 python eval_competitive.py
 ```
@@ -177,7 +156,7 @@ array([1., 0., 0.], dtype=float32)
 
 #### Convergence Reward
 
-`python train.py --env Test-v0 --chunk_len 8 --gamma 0.0 --lr 1e-3`
+`python train.py --env Test-v0 --chunk_len 8 --rnn gru --gamma 0.0 --lr 1e-3`
 
 * General RL algorithms will achieve an average reward of 55.5.
 * Because of the state memory unit, RNN based RL algorithms can reach the goal of 100.0.

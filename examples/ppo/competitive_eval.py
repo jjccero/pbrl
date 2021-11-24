@@ -1,8 +1,8 @@
 import gym
 import torch
 
+from pbrl.algorithms.ppo import PGPolicy
 from pbrl.competitive import Agent, CompetitiveEnv
-from pbrl.policy import PGPolicy
 
 
 class DemoCompetitiveEnv(CompetitiveEnv):
@@ -32,7 +32,7 @@ class DemoCompetitiveEnv(CompetitiveEnv):
 
 def main():
     config_policy = dict(
-        use_rnn=True,
+        rnn='lstm',
         hidden_sizes=[64, 64],
         activation=torch.nn.ReLU,
         obs_norm=True,

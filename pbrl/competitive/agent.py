@@ -3,7 +3,7 @@ import os
 import numpy as np
 import torch
 
-from pbrl.policy.policy import PGPolicy
+from pbrl.algorithms.ppo.policy import PGPolicy
 
 
 class Agent:
@@ -12,7 +12,7 @@ class Agent:
         self.states_actor = None
 
     def reset(self):
-        if self.policy.use_rnn:
+        if self.policy.rnn:
             self.states_actor = None
 
     def load_from_dir(self, filename_policy):
@@ -26,6 +26,6 @@ class Agent:
 
     def step(self, observations: np.ndarray) -> np.ndarray:
         observations = self.policy.normalize_observations(observations, update=False)
-        actions, _, self.states_actor = self.policy.step(observations, self.states_actor)
+        actions, self.states_actor = self.policy.act(observations, self.states_actor)
         actions = self.policy.wrap_actions(actions)
         return actions

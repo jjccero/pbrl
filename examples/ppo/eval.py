@@ -1,11 +1,11 @@
 import argparse
-import logging
 
 import gym
 import torch
-from pbrl.core import PPO, Runner
+
+from pbrl.algorithms.ppo import PGPolicy
+from pbrl.algorithms.ppo import PPO, Runner
 from pbrl.env import DummyVecEnv
-from pbrl.policy import PGPolicy
 
 
 def main():
@@ -14,7 +14,7 @@ def main():
     parser.add_argument('--log_dir', type=str, default=None)
     parser.add_argument('--subproc', action='store_true')
     parser.add_argument('--seed', type=int, default=0)
-    parser.add_argument('--chunk_len', type=int, default=None)
+    parser.add_argument('--rnn', type=str, default=None)
     parser.add_argument('--obs_norm', action='store_true')
 
     parser.add_argument('--env_num_test', type=int, default=1)
@@ -33,8 +33,8 @@ def main():
     policy = PGPolicy(
         observation_space=env_test.observation_space,
         action_space=env_test.action_space,
-        use_rnn=args.chunk_len is not None,
-        hidden_sizes=[128,128],
+        rnn=args.rnn,
+        hidden_sizes=[64, 64],
         activation=torch.nn.Tanh,
         obs_norm=args.obs_norm,
         critic=False,
@@ -43,11 +43,12 @@ def main():
     # load policy from disk
     PPO.load(filename_policy, policy)
     # define test runner
-    runner_test = Runner(env_test, policy, episode_num=args.episode_num_test, render=args.render)
+    runner_test = Runner(env_test, policy, render=args.render)
     while True:
         try:
             runner_test.reset()
-            test_info = runner_test.run()
+            policy.eval()
+            test_info = runner_test.run(episode_num=args.episode_num_test)
             print(test_info)
         except KeyboardInterrupt:
             break

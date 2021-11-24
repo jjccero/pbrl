@@ -1,5 +1,4 @@
 import logging
-from typing import Dict, List
 
 import numpy as np
 from tensorboardX import SummaryWriter
@@ -10,14 +9,14 @@ logging.basicConfig(
 )
 
 
-def update_dict(d1: Dict, d2: Dict, prefix=''):
+def update_dict(d1: dict, d2: dict, prefix=''):
     for key, value in d2.items():
         if key in ('timestep', 'info'):
             continue
         key = prefix + key
         if key not in d1:
             d1[key] = []
-        if isinstance(value, List):
+        if isinstance(value, list):
             d1[key] += value
         else:
             d1[key].append(value)
@@ -27,7 +26,7 @@ class Logger:
     def __init__(self, filename: str):
         self.writer = SummaryWriter(filename, flush_secs=10)
 
-    def log(self, global_step: int, d: Dict):
+    def log(self, global_step: int, d: dict):
         s = '{}'.format(global_step)
         for key, value in d.items():
             if len(value) == 0:

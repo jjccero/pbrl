@@ -1,19 +1,19 @@
 import os
-from typing import Tuple, Optional, Dict
+from typing import Tuple, Optional
 
 import numpy as np
 import torch
-from pbrl.common.logger import update_dict, Logger
-from pbrl.core.buffer import PGBuffer
-from pbrl.core.runner import Runner
-from pbrl.policy.policy import PGPolicy
+
+from pbrl.algorithms.ppo.buffer import PGBuffer
+from pbrl.algorithms.ppo.policy import PGPolicy
+from pbrl.common.trainer import Trainer
 
 
-class PPO:
+class PPO(Trainer):
     def __init__(
             self,
             policy: PGPolicy,
-            mini_batch_size: int = 64,
+            batch_size: int = 64,
             chunk_len: Optional[int] = None,
             eps: float = 0.2,
             gamma: float = 0.99,
@@ -28,9 +28,11 @@ class PPO:
             adv_norm: bool = False,
             recompute_adv: bool = True
     ):
+        super(PPO, self).__init__()
         self.policy = policy
         # on-policy buffer for ppo
-        self.buffer = PGBuffer(mini_batch_size, chunk_len)
+        self.buffer = PGBuffer(chunk_len)
+        self.batch_size = batch_size
         self.eps = eps
         self.gamma = gamma
         self.gae_lambda = gae_lambda
@@ -51,9 +53,6 @@ class PPO:
             lr=self.lr,
             weight_decay=self.weight_decay
         )
-        self.timestep = 0
-        self.iteration = 0
-        self.scheduler: Optional[torch.optim.lr_scheduler.LambdaLR] = None
 
     @staticmethod
     def load(
@@ -94,7 +93,7 @@ class PPO:
         observations = self.policy.n2t(np.stack(self.buffer.observations, axis=1))
         observations_next = self.policy.n2t(self.buffer.observations_next)
         dones = None
-        if self.policy.use_rnn:
+        if self.policy.rnn:
             dones = self.policy.n2t(np.stack(self.buffer.dones, axis=1))
         with torch.no_grad():
             values, states_critic = self.policy.get_values(observations, dones=dones)
@@ -155,70 +154,36 @@ class PPO:
             value_loss = ((values - returns) ** 2).mean()
         return value_loss
 
-    def update(self, batch: Tuple[np.ndarray], batch_rnn: Optional[Tuple[np.ndarray, ...]]) -> Dict:
-        observations, actions, advantages, log_probs_old, returns = map(self.policy.n2t, batch)
-        if self.policy.use_rnn:
-            dones, = map(self.policy.n2t, batch_rnn)
-        else:
-            dones = None
-        policy_loss, entropy_loss = self.actor_loss(observations, actions, advantages, log_probs_old, dones)
-        value_loss = self.critic_loss(observations, advantages, returns, dones)
-        loss = value_loss * self.vf_coef - policy_loss - entropy_loss * self.entropy_coef
-
-        self.optimizer.zero_grad()
-        loss.backward()
-        torch.nn.utils.clip_grad_norm_(self.policy.actor.parameters(), self.grad_norm)
-        torch.nn.utils.clip_grad_norm_(self.policy.critic.parameters(), self.grad_norm)
-        self.optimizer.step()
-
-        return dict(
-            policy=policy_loss.item(),
-            critic=value_loss.item(),
-            entropy=entropy_loss.item()
+    def update(self):
+        loss_info = dict(
+            policy=[],
+            critic=[],
+            entropy=[]
         )
 
-    def learn(
-            self,
-            timestep: int,
-            runner_train: Runner,
-            logger: Optional[Logger],
-            log_interval: Optional[int],
-            runner_test: Optional[Runner] = None,
-            test_interval: Optional[int] = None
-    ):
-        timestep += self.timestep
-        info = dict()
-        runner_train.reset()
+        for i in range(self.repeat):
+            if i == 0 or self.recompute_adv:
+                self.gae()
+            # sample batch from buffer
+            for batch, batch_rnn in self.buffer.generator(self.batch_size):
+                observations, actions, advantages, log_probs_old, returns = map(self.policy.n2t, batch)
+                dones = None
+                if self.policy.rnn:
+                    dones, = map(self.policy.n2t, batch_rnn)
+                policy_loss, entropy_loss = self.actor_loss(observations, actions, advantages, log_probs_old, dones)
+                value_loss = self.critic_loss(observations, advantages, returns, dones)
+                loss = value_loss * self.vf_coef - policy_loss - entropy_loss * self.entropy_coef
 
-        if test_interval and log_interval and self.timestep == 0:
-            runner_test.reset()
-            test_info = runner_test.run()
-            update_dict(info, test_info, 'test/')
-            logger.log(self.timestep, info)
+                self.optimizer.zero_grad()
+                loss.backward()
+                torch.nn.utils.clip_grad_norm_(self.policy.actor.parameters(), self.grad_norm)
+                torch.nn.utils.clip_grad_norm_(self.policy.critic.parameters(), self.grad_norm)
+                self.optimizer.step()
 
-        while True:
-            train_info = runner_train.run(self.buffer)
-            self.timestep += train_info['timestep']
-            for i in range(self.repeat):
-                if i == 0 or self.recompute_adv:
-                    self.gae()
-                # sample batch from buffer
-                for batch, batch_rnn in self.buffer.generator():
-                    loss_info = self.update(batch, batch_rnn)
-                    update_dict(info, loss_info, 'loss/')
-            if self.scheduler:
-                self.scheduler.step()
-                train_info['lr'] = self.scheduler.get_last_lr()
-            update_dict(info, train_info, 'train/')
-            # on-policy
-            self.buffer.clear()
-            self.iteration += 1
-            done = self.timestep >= timestep
-            if test_interval and (self.iteration % test_interval == 0 or done):
-                runner_test.reset()
-                test_info = runner_test.run()
-                update_dict(info, test_info, 'test/')
-            if log_interval and (self.iteration % log_interval == 0 or done):
-                logger.log(self.timestep, info)
-            if done:
-                break
+                loss_info['policy'].append(policy_loss.item())
+                loss_info['critic'].append(value_loss.item())
+                loss_info['entropy'].append(entropy_loss.item())
+
+        # on-policy
+        self.buffer.clear()
+        return loss_info

@@ -3,7 +3,7 @@ from typing import List
 
 import numpy as np
 
-from pbrl.policy import PGPolicy
+from pbrl.algorithms.ppo.policy import PGPolicy
 
 
 class MultiPolicyRunner:
@@ -64,7 +64,7 @@ class MultiPolicyRunner:
                         states_actor = self.states_actor[index]
                         policy = policies[index]
 
-                        if policy.use_rnn:
+                        if policy.rnn:
                             if isinstance(states_actor, tuple):
                                 # lstm
                                 for states_ in states_actor:

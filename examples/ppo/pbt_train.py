@@ -5,11 +5,10 @@ import gym
 import numpy as np
 import torch
 
+from pbrl.algorithms.ppo import PPO, Runner, PGPolicy
 from pbrl.common import Logger, update_dict
-from pbrl.core import PPO, Runner
 from pbrl.env import DummyVecEnv
 from pbrl.pbt import PBT
-from pbrl.policy import PGPolicy
 
 
 def worker_fn(
@@ -22,7 +21,8 @@ def worker_fn(
         reward_norm,
         gamma,
         chunk_len,
-        mini_batch_size,
+        rnn,
+        batch_size,
         eps,
         gae_lambda,
         repeat,
@@ -59,7 +59,7 @@ def worker_fn(
     policy = PGPolicy(
         observation_space=env_train.observation_space,
         action_space=env_train.action_space,
-        use_rnn=chunk_len is not None,
+        rnn=rnn,
         hidden_sizes=[64, 64],
         activation=torch.nn.Tanh,
         obs_norm=obs_norm,
@@ -70,7 +70,7 @@ def worker_fn(
     # define trainer for the task
     trainer = PPO(
         policy,
-        mini_batch_size=mini_batch_size,
+        batch_size=batch_size,
         chunk_len=chunk_len,
         eps=eps,
         gamma=gamma,
@@ -87,13 +87,14 @@ def worker_fn(
     )
     PPO.load(filename_policy, policy, trainer)
     # define train and test runner
-    runner_train = Runner(env_train, policy, buffer_size=buffer_size)
-    runner_test = Runner(env_test, policy, episode_num=episode_num_test)
+    runner_train = Runner(env_train, policy)
+    runner_test = Runner(env_test, policy)
     info = dict()
     while True:
         trainer.learn(
             timestep=ready_timestep,
             runner_train=runner_train,
+            buffer_size=buffer_size,
             logger=logger,
             log_interval=log_interval
         )
@@ -109,7 +110,7 @@ def worker_fn(
         )
         # evaluate
         runner_test.reset()
-        eval_info = runner_test.run()
+        eval_info = runner_test.run(episode_num=episode_num_test)
         update_dict(info, eval_info, 'test/')
         score = np.mean(eval_info['reward'])
         remote.send((trainer.iteration, score, x))
@@ -146,8 +147,9 @@ def main():
 
     parser.add_argument('--env_num', type=int, default=16)
     parser.add_argument('--buffer_size', type=int, default=2048)
-    parser.add_argument('--mini_batch_size', type=int, default=64)
+    parser.add_argument('--batch_size', type=int, default=64)
     parser.add_argument('--chunk_len', type=int, default=None)
+    parser.add_argument('--rnn', type=str, default=None)
     parser.add_argument('--env_num_test', type=int, default=20)
     parser.add_argument('--episode_num_test', type=int, default=100)
     parser.add_argument('--ready_timestep', type=int, default=100000)

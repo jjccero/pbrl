@@ -5,11 +5,10 @@ import gym
 import numpy as np
 import torch
 
+from pbrl.algorithms.ppo import PPO, Runner, PGPolicy
 from pbrl.common import Logger, update_dict
 from pbrl.competitive import CompetitiveEnv, Agent, MultiDummyEnv, MultiPolicyRunner, CompetitivePBT
-from pbrl.core import PPO, Runner
 from pbrl.env import DummyVecEnv
-from pbrl.policy import PGPolicy
 
 
 class TrainEnv(CompetitiveEnv):
@@ -21,8 +20,8 @@ class TrainEnv(CompetitiveEnv):
     def init(self, config_policy, **kwargs):
         agent = Agent(
             PGPolicy(
-                self.observation_space,
-                self.action_space,
+                observation_space=self.observation_space,
+                action_space=self.action_space,
                 **config_policy
             )
         )
@@ -69,14 +68,14 @@ def worker_fn(
     config_ppo = dict(
         chunk_len=10,
         lr=1e-3,
-        mini_batch_size=5120,
+        batch_size=5120,
         repeat=3,
         eps=0.2,
         gamma=0.995,
         gae_lambda=0.95
     )
     config_policy = dict(
-        use_rnn=True,
+        rnn='lstm',
         hidden_sizes=[128, 128],
         activation=torch.nn.ReLU,
         obs_norm=True,
@@ -107,8 +106,8 @@ def worker_fn(
     eval_env.seed(seed_worker)
 
     policy = PGPolicy(
-        env_train.observation_space,
-        env_train.action_space,
+        observation_space=env_train.observation_space,
+        action_space=env_train.action_space,
         **config_policy
     )
     trainer = PPO(policy, **config_ppo)
@@ -117,14 +116,14 @@ def worker_fn(
     trainer.save('{}/{}-{}.pkl'.format(history_dir, trainer.iteration, worker_id))
     # define opponents' policies
     policy_opponent = PGPolicy(
-        env_train.observation_space,
-        env_train.action_space,
+        observation_space=env_train.observation_space,
+        action_space=env_train.action_space,
         critic=False,
         **config_policy
     )
     policies = [policy, policy_opponent]
 
-    runner_train = Runner(env_train, policy, buffer_size)
+    runner_train = Runner(env_train, policy)
     runner_eval = MultiPolicyRunner(eval_env, policy_num=2, episode_num=episode_num_test)
     info = dict()
     while True:
@@ -132,6 +131,7 @@ def worker_fn(
         trainer.learn(
             timestep=buffer_size,
             runner_train=runner_train,
+            buffer_size=buffer_size,
             logger=logger,
             log_interval=1
         )

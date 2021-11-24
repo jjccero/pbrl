@@ -1,11 +1,10 @@
-from typing import Callable, Optional
-from typing import List, Type
+from typing import Callable, Optional, Tuple, Any, List, Type
 
 import numpy as np
 import torch
 from gym.spaces import Box
+
 from pbrl.common.rms import RunningMeanStd
-from pbrl.policy.net import Actor, Critic
 
 
 def get_action_wrapper(action_space, clip_fn: str) -> Optional[Callable[[np.ndarray], np.ndarray]]:
@@ -24,44 +23,31 @@ def get_action_wrapper(action_space, clip_fn: str) -> Optional[Callable[[np.ndar
     return action_wrapper
 
 
-class PGPolicy:
+class Policy:
     def __init__(
             self,
             observation_space,
             action_space,
-            use_rnn: bool,
             hidden_sizes: List[int],
             activation: Type[torch.nn.Module],
+            rnn: Optional[str],
             clip_fn='clip',
             obs_norm: bool = False,
             reward_norm: bool = False,
             gamma: float = 0.99,
             obs_clip: float = 10.0,
             reward_clip: float = 10.0,
-            critic: bool = True,
             device=torch.device('cpu')
     ):
-        obs_dim = observation_space.shape
-        continuous = isinstance(action_space, Box)
-        action_dim = action_space.shape[0] if continuous else action_space.n
-        self.use_rnn = use_rnn
+        self.observation_space = observation_space
+        self.action_space = action_space
+        self.hidden_sizes = hidden_sizes
+        self.activation = activation
+        if rnn is not None:
+            rnn = rnn.lower()
+            assert rnn in ('lstm', 'gru')
+        self.rnn = rnn
         self.device = device
-        self.actor = Actor(
-            obs_dim,
-            action_dim,
-            continuous,
-            use_rnn,
-            hidden_sizes,
-            activation,
-            device
-        )
-        self.critic = Critic(
-            obs_dim,
-            use_rnn,
-            hidden_sizes,
-            activation,
-            device
-        ) if critic else None
         self.obs_norm = obs_norm
         self.rms_obs = RunningMeanStd(
             np.zeros(observation_space.shape, dtype=np.float64),
@@ -74,6 +60,19 @@ class PGPolicy:
         self.reward_clip = reward_clip
         self._action_wrapper = get_action_wrapper(action_space, clip_fn)
 
+    def train(self):
+        pass
+
+    def eval(self):
+        pass
+
+    def act(
+            self,
+            observations: np.ndarray,
+            states_actor
+    ) -> Tuple[np.ndarray, Any]:
+        raise NotImplementedError
+
     @staticmethod
     def t2n(t: torch.Tensor) -> np.ndarray:
         return t.detach().cpu().numpy()
@@ -82,57 +81,6 @@ class PGPolicy:
         if n.dtype == np.float64:
             n = n.astype(np.float32)
         return torch.from_numpy(n).to(self.device)
-
-    def train(self):
-        self.actor.train()
-        if self.critic:
-            self.critic.train()
-
-    def eval(self):
-        self.actor.eval()
-        if self.critic:
-            self.critic.eval()
-
-    @torch.no_grad()
-    def step(
-            self,
-            observations: np.ndarray,
-            states_actor
-    ):
-        observations = self.n2t(observations)
-        action, log_prob, states_actor = self.get_actions(observations, states_actor)
-        action = self.t2n(action)
-        log_prob = self.t2n(log_prob)
-        return action, log_prob, states_actor
-
-    def get_values(
-            self,
-            observations: torch.Tensor,
-            states_critic=None,
-            dones: Optional[torch.Tensor] = None
-    ):
-        return self.critic.forward(observations, states_critic, dones)
-
-    def get_actions(self, observations: torch.Tensor, states_actor):
-        dist, states_actor = self.actor.forward(observations, states_actor)
-        actions = dist.sample()
-        log_probs = dist.log_prob(actions)
-        if self.actor.continuous:
-            log_probs = log_probs.sum(-1)
-        return actions, log_probs, states_actor
-
-    def evaluate_actions(
-            self,
-            observations: torch.Tensor,
-            actions: torch.Tensor,
-            dones: Optional[torch.Tensor]
-    ):
-        dist, _ = self.actor.forward(observations, dones=dones)
-        log_probs = dist.log_prob(actions)
-        dist_entropy = dist.entropy()
-        if self.actor.continuous:
-            log_probs = log_probs.sum(-1)
-        return log_probs, dist_entropy
 
     def normalize_observations(self, observations: np.ndarray, update=False):
         if self.obs_norm:
@@ -156,3 +104,10 @@ class PGPolicy:
             return self._action_wrapper(actions)
         else:
             return actions
+
+    def reset_state(self, states_actor, i):
+        if self.rnn == 'lstm':
+            for states_ in states_actor:
+                states_[:, i, :] = 0.
+        elif self.rnn == 'gru':
+            states_actor[:, i, :] = 0.
