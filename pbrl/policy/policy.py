@@ -2,7 +2,7 @@ from typing import Callable, Optional, Tuple, Any, List, Type
 
 import numpy as np
 import torch
-from gym.spaces import Box
+from gym.spaces import Box, Discrete
 
 from pbrl.common.rms import RunningMeanStd
 
@@ -111,3 +111,14 @@ class Policy:
                 states_[:, i, :] = 0.
         elif self.rnn == 'gru':
             states_actor[:, i, :] = 0.
+
+    def random_action(
+            self,
+            env_num: int
+    ):
+        if isinstance(self.action_space, Box):
+            return np.random.uniform(-1.0, 1.0, size=(env_num, *self.action_space.shape))
+        elif isinstance(self.action_space, Discrete):
+            return np.random.randint(self.action_space.n, size=env_num)
+        else:
+            raise NotImplementedError

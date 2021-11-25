@@ -35,7 +35,7 @@ class Runner:
             self.env.render()
             time.sleep(self.render)
 
-    def run(self, buffer_size=0, buffer: Optional[PGBuffer] = None, episode_num=0) -> Dict:
+    def run(self, timestep_update=0, buffer: Optional[PGBuffer] = None, episode_num=0) -> Dict:
         timestep = 0
         episode = 0
         episode_rewards = []
@@ -81,7 +81,7 @@ class Runner:
                     if update:
                         self.returns[i] = 0.0
 
-            if (buffer_size and timestep >= buffer_size) or (episode_num and episode >= episode_num):
+            if (timestep_update and timestep >= timestep_update) or (episode_num and episode >= episode_num):
                 if update:
                     buffer.observations_next = self.policy.normalize_observations(self.observations, update=False)
                 break

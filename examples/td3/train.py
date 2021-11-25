@@ -6,7 +6,7 @@ import torch
 
 from pbrl.algorithms.td3 import TD3, Runner, TD3Policy, ReplayBuffer
 from pbrl.common import Logger
-from pbrl.env import SubProcVecEnv, DummyVecEnv
+from pbrl.env import DummyVecEnv
 
 
 def main():
@@ -26,7 +26,7 @@ def main():
     parser.add_argument('--start_timestep', type=int, default=25000)
     parser.add_argument('--buffer_size', type=int, default=1000000)
     parser.add_argument('--batch_size', type=int, default=256)
-    parser.add_argument('--step_per_update', type=int, default=1)
+    parser.add_argument('--timestep_update', type=int, default=1)
     parser.add_argument('--policy_freq', type=int, default=2)
     parser.add_argument('--chunk_len', type=int, default=None)
     parser.add_argument('--rnn', type=str, default=None)
@@ -35,7 +35,7 @@ def main():
     parser.add_argument('--tau', type=float, default=0.005)
     parser.add_argument('--noise_clip', type=float, default=0.5)
     parser.add_argument('--noise_explore', type=float, default=0.1)
-    parser.add_argument('--noise_policy', type=float, default=0.2)
+    parser.add_argument('--noise_target', type=float, default=0.2)
 
     parser.add_argument('--obs_norm', action='store_true')
     parser.add_argument('--reward_norm', action='store_true')
@@ -50,22 +50,23 @@ def main():
 
     log_dir = args.log_dir if args.log_dir is not None else '{}-{}'.format(args.env, args.seed)
     filename_log = 'result/{}'.format(log_dir)
+    filename_policy = 'result/{}/policy.pkl'.format(log_dir)
 
     logger = Logger(filename_log)
     # define train and test environment
     env_train = DummyVecEnv([lambda: gym.make(args.env) for _ in range(args.env_num)])
-    env_test = SubProcVecEnv([lambda: gym.make(args.env) for _ in range(args.env_num_test)])
+    env_test = DummyVecEnv([lambda: gym.make(args.env) for _ in range(args.env_num_test)])
     env_train.seed(args.seed)
     env_test.seed(args.seed)
     # define policy
     policy = TD3Policy(
-        noise_explore=args.noise_policy,
+        noise_explore=args.noise_explore,
         noise_clip=args.noise_clip,
         observation_space=env_train.observation_space,
         action_space=env_train.action_space,
         rnn=args.rnn,
-        hidden_sizes=[64, 64],
-        activation=torch.nn.Tanh,
+        hidden_sizes=[256, 256],
+        activation=torch.nn.ReLU,
         obs_norm=args.obs_norm,
         reward_norm=args.reward_norm,
         gamma=args.gamma,
@@ -82,7 +83,7 @@ def main():
         buffer=buffer,
         batch_size=args.batch_size,
         gamma=args.gamma,
-        noise_target=args.noise_policy,
+        noise_target=args.noise_target,
         noise_clip=args.noise_clip,
         policy_freq=args.policy_freq,
         tau=args.tau,
@@ -91,22 +92,22 @@ def main():
     )
 
     # define train and test runner
-    runner_train = Runner(env_train, policy)
+    runner_train = Runner(env_train, policy, max_episode_steps=gym.make(args.env).spec.max_episode_steps)
     runner_test = Runner(env_test, policy)
-
-    # runner_train.reset()
-    # runner_train.run(buffer_size=args.start_timestep, buffer=buffer)
 
     trainer.learn(
         timestep=args.timestep,
         runner_train=runner_train,
-        buffer_size=args.step_per_update,
+        timestep_update=args.timestep_update,
         logger=logger,
         log_interval=args.log_interval,
         runner_test=runner_test,
         test_interval=args.test_interval,
-        episode_test=args.episode_num_test
+        episode_test=args.episode_num_test,
+        start_timestep=args.start_timestep
     )
+
+    trainer.save(filename_policy)
 
 
 if __name__ == '__main__':

@@ -1,3 +1,4 @@
+import os
 from typing import Optional
 
 import torch
@@ -17,9 +18,11 @@ class TD3(Trainer):
             noise_target: float = 0.2,
             noise_clip: float = 0.5,
             policy_freq: int = 2,
+            double_q: bool = False,
             tau: float = 0.005,
             lr_actor: float = 3e-4,
             lr_critic: float = 3e-4
+
     ):
         super(TD3, self).__init__()
         self.policy = policy
@@ -29,6 +32,7 @@ class TD3(Trainer):
         self.noise_target = noise_target
         self.noise_clip = noise_clip
         self.policy_freq = policy_freq
+        self.double_q = double_q
         self.tau = tau
         self.lr_actor = lr_actor
         self.lr_critic = lr_critic
@@ -43,8 +47,12 @@ class TD3(Trainer):
 
     def actor_loss(self, observations: torch.Tensor):
         actions, _ = self.policy.actor.forward(observations)
-        q1, q2 = self.policy.critic.forward(observations, actions)
-        policy_loss = (-torch.min(q1, q2)).mean()
+        if self.double_q:
+            q1, q2 = self.policy.critic.forward(observations, actions)
+            policy_loss = (-torch.min(q1, q2)).mean()
+        else:
+            # origin TD3 only use Q1
+            policy_loss = (-self.policy.critic.Q1(observations, actions)).mean()
         return policy_loss
 
     def critic_loss(
@@ -99,3 +107,37 @@ class TD3(Trainer):
 
             loss_info['policy'] = policy_loss.item()
         return loss_info
+
+    def save(self, filename: str):
+        pkl = {
+            'timestep': self.timestep,
+            'iteration': self.iteration,
+            'lr_actor': self.lr_actor,
+            'lr_critic': self.lr_critic,
+            'actor': {k: v.cpu() for k, v in self.policy.actor.state_dict().items()},
+            'critic': {k: v.cpu() for k, v in self.policy.critic.state_dict().items()},
+            'rms_obs': self.policy.rms_obs,
+            'rms_reward': self.policy.rms_reward,
+            'optimizer_actor': self.optimizer_actor.state_dict(),
+            'optimizer_critic': self.optimizer_critic.state_dict()
+        }
+        torch.save(pkl, filename)
+
+    @staticmethod
+    def load(filename: str, policy: TD3Policy, trainer=None):
+        if os.path.exists(filename):
+            pkl = torch.load(filename, map_location=policy.device)
+            policy.actor.load_state_dict(pkl['actor'])
+            if policy.critic:
+                policy.critic.load_state_dict(pkl['critic'])
+            if policy.obs_norm:
+                policy.rms_obs.load(pkl['rms_obs'])
+            if policy.reward_norm:
+                policy.rms_reward.load(pkl['rms_reward'])
+            if trainer:
+                trainer.timestep = pkl['timestep']
+                trainer.iteration = pkl['iteration']
+                trainer.lr_actor = pkl['lr_actor']
+                trainer.lr_critic = pkl['lr_critic']
+                trainer.optimizer_actor.load_state_dict(pkl['optimizer_actor'])
+                trainer.optimizer_critic.load_state_dict(pkl['optimizer_critic'])

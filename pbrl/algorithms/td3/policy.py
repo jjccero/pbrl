@@ -51,11 +51,15 @@ class TD3Policy(Policy):
     def step(
             self,
             observations: np.ndarray,
-            states_actor
+            states_actor,
+            random: False
     ):
-        actions, states_actor = self.act(observations, states_actor)
-        eps = (self.noise_explore * np.random.randn(*actions.shape)).clip(-self.noise_clip, self.noise_clip)
-        actions = (actions + eps).clip(-1.0, 1.0)
+        if random:
+            actions = self.random_action(observations.shape[0])
+        else:
+            actions, states_actor = self.act(observations, states_actor)
+            eps = (self.noise_explore * np.random.randn(*actions.shape)).clip(-self.noise_clip, self.noise_clip)
+            actions = (actions + eps).clip(-1.0, 1.0)
         return actions, states_actor
 
     @torch.no_grad()

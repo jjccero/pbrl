@@ -106,7 +106,7 @@ def main():
     trainer.learn(
         timestep=args.timestep,
         runner_train=runner_train,
-        buffer_size=args.buffer_size,
+        timestep_update=args.buffer_size,
         logger=logger,
         log_interval=args.log_interval,
         runner_test=runner_test,

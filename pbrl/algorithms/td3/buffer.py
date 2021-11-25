@@ -7,8 +7,7 @@ class ReplayBuffer:
             self,
             buffer_size: int,
             observation_space: Box,
-            action_space: Box,
-
+            action_space: Box
     ):
         self.buffer_size = buffer_size
         self.ptr = 0

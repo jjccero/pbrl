@@ -3,13 +3,13 @@ import argparse
 import gym
 import torch
 
-from pbrl.algorithms.ppo import PGPolicy, PPO, Runner
+from pbrl.algorithms.td3 import TD3,TD3Policy, Runner
 from pbrl.env import DummyVecEnv
 
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument('--env', type=str, default='CartPole-v0')
+    parser.add_argument('--env', type=str, default='HalfCheetah-v3')
     parser.add_argument('--log_dir', type=str, default=None)
     parser.add_argument('--subproc', action='store_true')
     parser.add_argument('--seed', type=int, default=0)
@@ -29,18 +29,18 @@ def main():
     env_test = DummyVecEnv([lambda: gym.make(args.env) for _ in range(args.env_num_test)])
     env_test.seed(args.seed)
     # define policy
-    policy = PGPolicy(
+    policy = TD3Policy(
         observation_space=env_test.observation_space,
         action_space=env_test.action_space,
         rnn=args.rnn,
-        hidden_sizes=[64, 64],
-        activation=torch.nn.Tanh,
+        hidden_sizes=[256, 256],
+        activation=torch.nn.ReLU,
         obs_norm=args.obs_norm,
         critic=False,
         device=torch.device('cuda:0') if torch.cuda.is_available() else torch.device('cpu')
     )
     # load policy from disk
-    PPO.load(filename_policy, policy)
+    TD3.load(filename_policy, policy)
     # define test runner
     runner_test = Runner(env_test, policy, render=args.render)
     while True:

@@ -38,7 +38,7 @@ class DeterministicActor(nn.Module):
         if self.rnn:
             self.f2 = Rnn(self.hidden_size, activation)
         self.act = Deterministic(self.hidden_size, action_dim)
-        _init(self)
+
         self.device = device
         self.to(self.device)
 
@@ -51,7 +51,7 @@ class DeterministicActor(nn.Module):
         x = self.f(observations)
         if self.rnn:
             x, states = self.f2(x, states, dones)
-        actions = self.act.forward(x).tanh()
+        actions = self.act(x).tanh()
         return actions, states
 
 
@@ -114,18 +114,24 @@ class DoubleQ(nn.Module):
 
         self.q1 = Deterministic(self.hidden_size, 1)
         self.q2 = Deterministic(self.hidden_size, 1)
-        _init(self)
+
         self.device = device
         self.to(self.device)
 
     def forward(self, observations, actions):
-        x = torch.cat((observations, actions), dim=-1)
-        x1 = self.f1.forward(x)
-        q1 = self.q1.forward(x1).squeeze(-1)
-        x2 = self.f2.forward(x)
-        q2 = self.q2.forward(x2).squeeze(-1)
+        x = torch.cat((observations, actions), dim=1)
+        x1 = self.f1(x)
+        q1 = self.q1(x1).squeeze(-1)
+
+        x2 = self.f2(x)
+        q2 = self.q2(x2).squeeze(-1)
         return q1, q2
 
+    def Q1(self, observations, actions):
+        x = torch.cat((observations, actions), dim=-1)
+        x1 = self.f1(x)
+        q1 = self.q1(x1).squeeze(-1)
+        return q1
 
 class Critic(nn.Module):
     def __init__(

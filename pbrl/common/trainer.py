@@ -27,12 +27,13 @@ class Trainer:
             self,
             timestep: int,
             runner_train,
-            buffer_size: int,
+            timestep_update: int,
             logger: Logger,
             log_interval: int,
             runner_test: Optional = None,
             test_interval=0,
-            episode_test=0
+            episode_test=0,
+            start_timestep=0
     ):
         timestep += self.timestep
         info = dict()
@@ -44,21 +45,23 @@ class Trainer:
             test_info = runner_test.run(episode_num=episode_test)
             update_dict(info, test_info, 'test/')
             logger.log(self.timestep, info)
+            if start_timestep:
+                train_info = runner_train.run(timestep_update=start_timestep, buffer=self.buffer, random=True)
+                self.timestep += train_info['timestep']
 
         self.policy.train()
         while True:
-            train_info = runner_train.run(buffer_size=buffer_size, buffer=self.buffer)
+            train_info = runner_train.run(timestep_update=timestep_update, buffer=self.buffer)
             self.timestep += train_info['timestep']
             loss_info = self.update()
             update_dict(info, loss_info, 'loss/')
-
             if self.scheduler:
                 self.scheduler.step()
                 train_info['lr'] = self.scheduler.get_last_lr()
-
             update_dict(info, train_info, 'train/')
             self.iteration += 1
             done = self.timestep >= timestep
+
             if test_interval and (self.iteration % test_interval == 0 or done):
                 runner_test.reset()
                 self.policy.eval()

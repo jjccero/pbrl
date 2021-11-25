@@ -94,7 +94,7 @@ def worker_fn(
         trainer.learn(
             timestep=ready_timestep,
             runner_train=runner_train,
-            buffer_size=buffer_size,
+            timestep_update=buffer_size,
             logger=logger,
             log_interval=log_interval
         )

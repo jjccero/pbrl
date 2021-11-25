@@ -131,7 +131,7 @@ If the action taken matches the number chosen in the last 3 steps, you will get 
 #### Example
 
 ```
->>> import pbrl
+>>> import pbrl.env
 >>> import gym
 >>> env = gym.make('Test-v0')
 >>> env.seed(0)

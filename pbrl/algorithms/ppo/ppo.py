@@ -54,40 +54,6 @@ class PPO(Trainer):
             weight_decay=self.weight_decay
         )
 
-    @staticmethod
-    def load(
-            filename: str,
-            policy: PGPolicy,
-            trainer=None
-    ):
-        if os.path.exists(filename):
-            pkl = torch.load(filename, map_location=policy.device)
-            policy.actor.load_state_dict(pkl['actor'])
-            if policy.critic:
-                policy.critic.load_state_dict(pkl['critic'])
-            if policy.obs_norm:
-                policy.rms_obs.load(pkl['rms_obs'])
-            if policy.reward_norm:
-                policy.rms_reward.load(pkl['rms_reward'])
-            if trainer:
-                trainer.timestep = pkl['timestep']
-                trainer.iteration = pkl['iteration']
-                trainer.lr = pkl['lr']
-                trainer.optimizer.load_state_dict(pkl['optimizer'])
-
-    def save(self, filename: str):
-        pkl = {
-            'timestep': self.timestep,
-            'iteration': self.iteration,
-            'lr': self.lr,
-            'actor': {k: v.cpu() for k, v in self.policy.actor.state_dict().items()},
-            'critic': {k: v.cpu() for k, v in self.policy.critic.state_dict().items()},
-            'rms_obs': self.policy.rms_obs,
-            'rms_reward': self.policy.rms_reward,
-            'optimizer': self.optimizer.state_dict()
-        }
-        torch.save(pkl, filename)
-
     def gae(self):
         # reshape to (env_num, step, ...)
         observations = self.policy.n2t(np.stack(self.buffer.observations, axis=1))
@@ -187,3 +153,33 @@ class PPO(Trainer):
         # on-policy
         self.buffer.clear()
         return loss_info
+
+    def save(self, filename: str):
+        pkl = {
+            'timestep': self.timestep,
+            'iteration': self.iteration,
+            'lr': self.lr,
+            'actor': {k: v.cpu() for k, v in self.policy.actor.state_dict().items()},
+            'critic': {k: v.cpu() for k, v in self.policy.critic.state_dict().items()},
+            'rms_obs': self.policy.rms_obs,
+            'rms_reward': self.policy.rms_reward,
+            'optimizer': self.optimizer.state_dict()
+        }
+        torch.save(pkl, filename)
+
+    @staticmethod
+    def load(filename: str, policy: PGPolicy, trainer=None):
+        if os.path.exists(filename):
+            pkl = torch.load(filename, map_location=policy.device)
+            policy.actor.load_state_dict(pkl['actor'])
+            if policy.critic:
+                policy.critic.load_state_dict(pkl['critic'])
+            if policy.obs_norm:
+                policy.rms_obs.load(pkl['rms_obs'])
+            if policy.reward_norm:
+                policy.rms_reward.load(pkl['rms_reward'])
+            if trainer:
+                trainer.timestep = pkl['timestep']
+                trainer.iteration = pkl['iteration']
+                trainer.lr = pkl['lr']
+                trainer.optimizer.load_state_dict(pkl['optimizer'])

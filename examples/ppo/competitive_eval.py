@@ -17,8 +17,8 @@ class DemoCompetitiveEnv(CompetitiveEnv):
             filename_policy = 'result/{}-0-current/{}.pkl'.format(env_name, worker_id)
             agent = Agent(
                 PGPolicy(
-                    self.observation_space.spaces[i],
-                    self.action_space.spaces[i],
+                    observation_space=self.observation_space.spaces[i],
+                    action_space=self.action_space.spaces[i],
                     **config_policy
                 )
             )
