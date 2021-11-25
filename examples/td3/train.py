@@ -3,8 +3,7 @@ import argparse
 import gym
 import numpy as np
 import torch
-
-from pbrl.algorithms.td3 import TD3, Runner, TD3Policy, ReplayBuffer
+from pbrl.algorithms.td3 import TD3, Runner, TD3Policy
 from pbrl.common import Logger
 from pbrl.env import DummyVecEnv
 
@@ -72,15 +71,10 @@ def main():
         gamma=args.gamma,
         device=torch.device('cuda:0') if torch.cuda.is_available() else torch.device('cpu')
     )
-    buffer = ReplayBuffer(
-        buffer_size=args.buffer_size,
-        observation_space=env_train.observation_space,
-        action_space=env_train.action_space
-    )
     # define trainer for the task
     trainer = TD3(
         policy=policy,
-        buffer=buffer,
+        buffer_size=args.buffer_size,
         batch_size=args.batch_size,
         gamma=args.gamma,
         noise_target=args.noise_target,

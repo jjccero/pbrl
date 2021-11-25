@@ -8,7 +8,6 @@ from pbrl.common.logger import update_dict, Logger
 
 class Trainer:
     def __init__(self):
-        self.policy = None
         self.buffer = None
         self.timestep = 0
         self.iteration = 0
@@ -40,7 +39,6 @@ class Trainer:
         runner_train.reset()
 
         if log_interval and test_interval and self.timestep == 0:
-            self.policy.eval()
             runner_test.reset()
             test_info = runner_test.run(episode_num=episode_test)
             update_dict(info, test_info, 'test/')
@@ -49,7 +47,6 @@ class Trainer:
                 train_info = runner_train.run(timestep_update=start_timestep, buffer=self.buffer, random=True)
                 self.timestep += train_info['timestep']
 
-        self.policy.train()
         while True:
             train_info = runner_train.run(timestep_update=timestep_update, buffer=self.buffer)
             self.timestep += train_info['timestep']
@@ -64,9 +61,7 @@ class Trainer:
 
             if test_interval and (self.iteration % test_interval == 0 or done):
                 runner_test.reset()
-                self.policy.eval()
                 test_info = runner_test.run(episode_num=episode_test)
-                self.policy.train()
                 update_dict(info, test_info, 'test/')
             if log_interval and (self.iteration % log_interval == 0 or done):
                 logger.log(self.timestep, info)

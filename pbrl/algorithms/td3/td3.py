@@ -1,8 +1,6 @@
 import os
-from typing import Optional
 
 import torch
-
 from pbrl.algorithms.td3.buffer import ReplayBuffer
 from pbrl.algorithms.td3.policy import TD3Policy
 from pbrl.common.trainer import Trainer
@@ -12,7 +10,7 @@ class TD3(Trainer):
     def __init__(
             self,
             policy: TD3Policy,
-            buffer: ReplayBuffer,
+            buffer_size: int = 1000000,
             batch_size: int = 256,
             gamma: float = 0.99,
             noise_target: float = 0.2,
@@ -22,12 +20,15 @@ class TD3(Trainer):
             tau: float = 0.005,
             lr_actor: float = 3e-4,
             lr_critic: float = 3e-4
-
     ):
         super(TD3, self).__init__()
         self.policy = policy
         self.batch_size = batch_size
-        self.buffer = buffer
+        self.buffer = ReplayBuffer(
+            buffer_size=buffer_size,
+            observation_space=policy.observation_space,
+            action_space=policy.action_space
+        )
         self.gamma = gamma
         self.noise_target = noise_target
         self.noise_clip = noise_clip
@@ -60,7 +61,7 @@ class TD3(Trainer):
             observations: torch.Tensor,
             actions: torch.Tensor,
             observations_next: torch.Tensor,
-            rewards: Optional[torch.Tensor],
+            rewards: torch.Tensor,
             dones: torch.Tensor
     ):
         with torch.no_grad():
@@ -84,28 +85,28 @@ class TD3(Trainer):
 
     def update(self):
         loss_info = dict()
+        self.policy.train()
+
         batch = self.buffer.sample(self.batch_size)
         observations, actions, observations_next, rewards, dones = map(self.policy.n2t, batch)
         q1_loss, q2_loss = self.critic_loss(observations, actions, observations_next, rewards, dones)
-
-        value_loss = q1_loss + q2_loss
+        critic_loss = q1_loss + q2_loss
         self.optimizer_critic.zero_grad()
-        value_loss.backward()
+        critic_loss.backward()
         self.optimizer_critic.step()
 
-        loss_info['q1'] = q1_loss.item()
-        loss_info['q2'] = q2_loss.item()
-
         if self.iteration % self.policy_freq == 0:
-            policy_loss = self.actor_loss(observations)
+            actor_loss = self.actor_loss(observations)
             self.optimizer_actor.zero_grad()
-            policy_loss.backward()
+            actor_loss.backward()
             self.optimizer_actor.step()
 
             Trainer.soft_update(self.policy.critic, self.policy.critic_target, self.tau)
             Trainer.soft_update(self.policy.actor, self.policy.actor_target, self.tau)
 
-            loss_info['policy'] = policy_loss.item()
+            loss_info['actor'] = actor_loss.item()
+        loss_info['q1'] = q1_loss.item()
+        loss_info['q2'] = q2_loss.item()
         return loss_info
 
     def save(self, filename: str):
@@ -128,8 +129,10 @@ class TD3(Trainer):
         if os.path.exists(filename):
             pkl = torch.load(filename, map_location=policy.device)
             policy.actor.load_state_dict(pkl['actor'])
+            policy.actor_target.load_state_dict(pkl['actor'])
             if policy.critic:
                 policy.critic.load_state_dict(pkl['critic'])
+                policy.critic_target.load_state_dict(pkl['critic'])
             if policy.obs_norm:
                 policy.rms_obs.load(pkl['rms_obs'])
             if policy.reward_norm:

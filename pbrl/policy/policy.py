@@ -3,7 +3,6 @@ from typing import Callable, Optional, Tuple, Any, List, Type
 import numpy as np
 import torch
 from gym.spaces import Box, Discrete
-
 from pbrl.common.rms import RunningMeanStd
 
 
@@ -30,7 +29,7 @@ class Policy:
             action_space,
             hidden_sizes: List[int],
             activation: Type[torch.nn.Module],
-            rnn: Optional[str],
+            rnn: Optional[str] = None,
             clip_fn='clip',
             obs_norm: bool = False,
             reward_norm: bool = False,

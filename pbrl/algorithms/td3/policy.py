@@ -2,7 +2,6 @@ import copy
 
 import numpy as np
 import torch
-
 from pbrl.policy.net import DeterministicActor, DoubleQ
 from pbrl.policy.policy import Policy
 
@@ -26,13 +25,14 @@ class TD3Policy(Policy):
         self.actor = DeterministicActor(rnn=None, **config_net)
         self.actor_target = copy.deepcopy(self.actor)
         self.actor_target.eval()
-
         if critic:
+            # the critic may be centerQ
             self.critic = DoubleQ(**config_net)
             self.critic_target = copy.deepcopy(self.critic)
             self.critic_target.eval()
         else:
             self.critic = None
+            self.critic_target = None
 
         self.noise_explore = noise_explore
         self.noise_clip = noise_clip

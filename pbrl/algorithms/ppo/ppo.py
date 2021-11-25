@@ -3,7 +3,6 @@ from typing import Tuple, Optional
 
 import numpy as np
 import torch
-
 from pbrl.algorithms.ppo.buffer import PGBuffer
 from pbrl.algorithms.ppo.policy import PGPolicy
 from pbrl.common.trainer import Trainer
@@ -122,11 +121,11 @@ class PPO(Trainer):
 
     def update(self):
         loss_info = dict(
-            policy=[],
             critic=[],
+            policy=[],
             entropy=[]
         )
-
+        self.policy.train()
         for i in range(self.repeat):
             if i == 0 or self.recompute_adv:
                 self.gae()
@@ -137,8 +136,8 @@ class PPO(Trainer):
                 if self.policy.rnn:
                     dones, = map(self.policy.n2t, batch_rnn)
                 policy_loss, entropy_loss = self.actor_loss(observations, actions, advantages, log_probs_old, dones)
-                value_loss = self.critic_loss(observations, advantages, returns, dones)
-                loss = value_loss * self.vf_coef - policy_loss - entropy_loss * self.entropy_coef
+                critic_loss = self.critic_loss(observations, advantages, returns, dones)
+                loss = critic_loss * self.vf_coef - policy_loss - entropy_loss * self.entropy_coef
 
                 self.optimizer.zero_grad()
                 loss.backward()
@@ -146,8 +145,8 @@ class PPO(Trainer):
                 torch.nn.utils.clip_grad_norm_(self.policy.critic.parameters(), self.grad_norm)
                 self.optimizer.step()
 
+                loss_info['critic'].append(critic_loss.item())
                 loss_info['policy'].append(policy_loss.item())
-                loss_info['critic'].append(value_loss.item())
                 loss_info['entropy'].append(entropy_loss.item())
 
         # on-policy

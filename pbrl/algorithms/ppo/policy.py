@@ -3,7 +3,6 @@ from typing import Optional
 import numpy as np
 import torch
 from gym.spaces import Box, Discrete
-
 from pbrl.policy.net import Actor, Critic
 from pbrl.policy.policy import Policy
 
@@ -26,17 +25,17 @@ class PGPolicy(Policy):
         self.actor = Actor(
             obs_dim=self.observation_space.shape,
             action_dim=action_dim,
-            continuous=continuous,
-            rnn=self.rnn,
             hidden_sizes=self.hidden_sizes,
             activation=self.activation,
+            rnn=self.rnn,
+            continuous=continuous,
             device=self.device
         )
         self.critic = Critic(
             obs_dim=self.observation_space.shape,
-            rnn=self.rnn,
             hidden_sizes=self.hidden_sizes,
             activation=self.activation,
+            rnn=self.rnn,
             device=self.device
         ) if critic else None
 

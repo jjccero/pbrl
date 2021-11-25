@@ -1,8 +1,7 @@
 import time
-from typing import Optional, Dict
+from typing import Optional
 
 import numpy as np
-
 from pbrl.algorithms.td3.buffer import ReplayBuffer
 from pbrl.algorithms.td3.policy import TD3Policy
 from pbrl.env.env import VectorEnv
@@ -38,12 +37,13 @@ class Runner:
             self.env.render()
             time.sleep(self.render)
 
-    def run(self, timestep_update=0, buffer: Optional[ReplayBuffer] = None, episode_num=0, random=False) -> Dict:
+    def run(self, timestep_update=0, buffer: Optional[ReplayBuffer] = None, episode_num=0, random=False) -> dict:
         timestep = 0
         episode = 0
         episode_rewards = []
         episode_infos = []
         update = buffer is not None
+        self.policy.eval()
 
         while True:
             observations = self.policy.normalize_observations(self.observations, update)

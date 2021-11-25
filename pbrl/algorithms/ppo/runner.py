@@ -2,7 +2,6 @@ import time
 from typing import Optional, Dict
 
 import numpy as np
-
 from pbrl.algorithms.ppo.buffer import PGBuffer
 from pbrl.algorithms.ppo.policy import PGPolicy
 from pbrl.env.env import VectorEnv
@@ -41,6 +40,7 @@ class Runner:
         episode_rewards = []
         episode_infos = []
         update = buffer is not None
+        self.policy.eval()
 
         while True:
             observations = self.policy.normalize_observations(self.observations, update)
