@@ -4,10 +4,13 @@ from typing import Optional
 import torch
 
 from pbrl.common.logger import update_dict, Logger
+from pbrl.common.runner import BaseRunner
+from pbrl.policy.policy import BasePolicy
 
 
 class Trainer:
     def __init__(self):
+        self.policy: Optional[BasePolicy] = None
         self.buffer = None
         self.timestep = 0
         self.iteration = 0
@@ -25,11 +28,11 @@ class Trainer:
     def learn(
             self,
             timestep: int,
-            runner_train,
+            runner_train: BaseRunner,
             timestep_update: int,
             logger: Logger,
             log_interval: int,
-            runner_test: Optional = None,
+            runner_test: Optional[BaseRunner] = None,
             test_interval=0,
             episode_test=0,
             start_timestep=0
@@ -40,15 +43,17 @@ class Trainer:
 
         if log_interval and test_interval and self.timestep == 0:
             runner_test.reset()
-            test_info = runner_test.run(episode_num=episode_test)
+            test_info = runner_test.run(policy=self.policy, episode_num=episode_test)
             update_dict(info, test_info, 'test/')
             logger.log(self.timestep, info)
             if start_timestep:
-                train_info = runner_train.run(timestep_update=start_timestep, buffer=self.buffer, random=True)
+                train_info = runner_train.run(
+                    policy=self.policy, buffer=self.buffer, timestep_num=start_timestep, random=True
+                )
                 self.timestep += train_info['timestep']
 
         while True:
-            train_info = runner_train.run(timestep_update=timestep_update, buffer=self.buffer)
+            train_info = runner_train.run(policy=self.policy, buffer=self.buffer, timestep_num=timestep_update)
             self.timestep += train_info['timestep']
             loss_info = self.update()
             update_dict(info, loss_info, 'loss/')
@@ -61,7 +66,7 @@ class Trainer:
 
             if test_interval and (self.iteration % test_interval == 0 or done):
                 runner_test.reset()
-                test_info = runner_test.run(episode_num=episode_test)
+                test_info = runner_test.run(policy=self.policy, episode_num=episode_test)
                 update_dict(info, test_info, 'test/')
             if log_interval and (self.iteration % log_interval == 0 or done):
                 logger.log(self.timestep, info)

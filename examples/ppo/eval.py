@@ -3,7 +3,7 @@ import argparse
 import gym
 import torch
 
-from pbrl.algorithms.ppo import PGPolicy, PPO, Runner
+from pbrl.algorithms.ppo import Policy, PPO, Runner
 from pbrl.env import DummyVecEnv
 
 
@@ -29,7 +29,7 @@ def main():
     env_test = DummyVecEnv([lambda: gym.make(args.env) for _ in range(args.env_num_test)])
     env_test.seed(args.seed)
     # define policy
-    policy = PGPolicy(
+    policy = Policy(
         observation_space=env_test.observation_space,
         action_space=env_test.action_space,
         rnn=args.rnn,
@@ -42,12 +42,11 @@ def main():
     # load policy from disk
     PPO.load(filename_policy, policy)
     # define test runner
-    runner_test = Runner(env_test, policy, render=args.render)
+    runner_test = Runner(env_test, render=args.render)
     while True:
         try:
             runner_test.reset()
-            policy.eval()
-            test_info = runner_test.run(episode_num=args.episode_num_test)
+            test_info = runner_test.run(policy=policy, episode_num=args.episode_num_test)
             print(test_info)
         except KeyboardInterrupt:
             break

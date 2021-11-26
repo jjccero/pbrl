@@ -4,7 +4,7 @@ import gym
 import numpy as np
 import torch
 
-from pbrl.algorithms.ppo import PPO, Runner, PGPolicy
+from pbrl.algorithms.ppo import PPO, Runner, Policy
 from pbrl.common import Logger
 from pbrl.env import SubProcVecEnv, DummyVecEnv
 
@@ -62,7 +62,7 @@ def main():
     env_train.seed(args.seed)
     env_test.seed(args.seed)
     # define policy
-    policy = PGPolicy(
+    policy = Policy(
         observation_space=env_train.observation_space,
         action_space=env_train.action_space,
         rnn=args.rnn,
@@ -101,8 +101,8 @@ def main():
     if args.resume:
         PPO.load(filename_policy, policy, trainer)
     # define train and test runner
-    runner_train = Runner(env_train, policy)
-    runner_test = Runner(env_test, policy)
+    runner_train = Runner(env_train)
+    runner_test = Runner(env_test)
     trainer.learn(
         timestep=args.timestep,
         runner_train=runner_train,

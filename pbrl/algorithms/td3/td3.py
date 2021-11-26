@@ -1,15 +1,16 @@
 import os
 
 import torch
+
 from pbrl.algorithms.td3.buffer import ReplayBuffer
-from pbrl.algorithms.td3.policy import TD3Policy
+from pbrl.algorithms.td3.policy import Policy
 from pbrl.common.trainer import Trainer
 
 
 class TD3(Trainer):
     def __init__(
             self,
-            policy: TD3Policy,
+            policy: Policy,
             buffer_size: int = 1000000,
             batch_size: int = 256,
             gamma: float = 0.99,
@@ -53,7 +54,8 @@ class TD3(Trainer):
             policy_loss = (-torch.min(q1, q2)).mean()
         else:
             # origin TD3 only use Q1
-            policy_loss = (-self.policy.critic.Q1(observations, actions)).mean()
+            q1 = self.policy.critic.Q1(observations, actions)
+            policy_loss = (-q1).mean()
         return policy_loss
 
     def critic_loss(
@@ -87,8 +89,14 @@ class TD3(Trainer):
         loss_info = dict()
         self.policy.train()
 
-        batch = self.buffer.sample(self.batch_size)
-        observations, actions, observations_next, rewards, dones = map(self.policy.n2t, batch)
+        observations, actions, observations_next, rewards, dones = self.buffer.sample(self.batch_size)
+        observations = self.policy.normalize_observations(observations)
+        observations_next = self.policy.normalize_observations(observations_next)
+        rewards = self.policy.normalize_rewards(rewards)
+        observations, actions, observations_next, rewards, dones = map(
+            self.policy.n2t,
+            (observations, actions, observations_next, rewards, dones)
+        )
         q1_loss, q2_loss = self.critic_loss(observations, actions, observations_next, rewards, dones)
         critic_loss = q1_loss + q2_loss
         self.optimizer_critic.zero_grad()
@@ -125,7 +133,7 @@ class TD3(Trainer):
         torch.save(pkl, filename)
 
     @staticmethod
-    def load(filename: str, policy: TD3Policy, trainer=None):
+    def load(filename: str, policy: Policy, trainer=None):
         if os.path.exists(filename):
             pkl = torch.load(filename, map_location=policy.device)
             policy.actor.load_state_dict(pkl['actor'])

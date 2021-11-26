@@ -5,7 +5,7 @@ import gym
 import numpy as np
 import torch
 
-from pbrl.algorithms.ppo import PPO, Runner, PGPolicy
+from pbrl.algorithms.ppo import PPO, Runner, Policy
 from pbrl.common import Logger, update_dict
 from pbrl.env import DummyVecEnv
 from pbrl.pbt import PBT
@@ -56,7 +56,7 @@ def worker_fn(
     env_train.seed(seed_worker)
     env_test.seed(seed_worker)
     # define policy
-    policy = PGPolicy(
+    policy = Policy(
         observation_space=env_train.observation_space,
         action_space=env_train.action_space,
         rnn=rnn,
@@ -87,8 +87,8 @@ def worker_fn(
     )
     PPO.load(filename_policy, policy, trainer)
     # define train and test runner
-    runner_train = Runner(env_train, policy)
-    runner_test = Runner(env_test, policy)
+    runner_train = Runner(env_train)
+    runner_test = Runner(env_test)
     info = dict()
     while True:
         trainer.learn(
@@ -110,7 +110,7 @@ def worker_fn(
         )
         # evaluate
         runner_test.reset()
-        eval_info = runner_test.run(episode_num=episode_num_test)
+        eval_info = runner_test.run(policy=policy, episode_num=episode_num_test)
         update_dict(info, eval_info, 'test/')
         score = np.mean(eval_info['reward'])
         remote.send((trainer.iteration, score, x))

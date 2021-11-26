@@ -3,7 +3,8 @@ import argparse
 import gym
 import numpy as np
 import torch
-from pbrl.algorithms.td3 import TD3, Runner, TD3Policy
+
+from pbrl.algorithms.td3 import TD3, Runner, Policy
 from pbrl.common import Logger
 from pbrl.env import DummyVecEnv
 
@@ -36,6 +37,8 @@ def main():
     parser.add_argument('--noise_explore', type=float, default=0.1)
     parser.add_argument('--noise_target', type=float, default=0.2)
 
+    parser.add_argument('--double_q', action='store_true')  # whether min(Q1,Q2) when updating actor
+
     parser.add_argument('--obs_norm', action='store_true')
     parser.add_argument('--reward_norm', action='store_true')
 
@@ -58,7 +61,7 @@ def main():
     env_train.seed(args.seed)
     env_test.seed(args.seed)
     # define policy
-    policy = TD3Policy(
+    policy = Policy(
         noise_explore=args.noise_explore,
         noise_clip=args.noise_clip,
         observation_space=env_train.observation_space,
@@ -80,14 +83,15 @@ def main():
         noise_target=args.noise_target,
         noise_clip=args.noise_clip,
         policy_freq=args.policy_freq,
+        double_q=args.double_q,
         tau=args.tau,
         lr_actor=args.lr_actor,
         lr_critic=args.lr_critic
     )
 
     # define train and test runner
-    runner_train = Runner(env_train, policy, max_episode_steps=gym.make(args.env).spec.max_episode_steps)
-    runner_test = Runner(env_test, policy)
+    runner_train = Runner(env_train, max_episode_steps=gym.make(args.env).spec.max_episode_steps)
+    runner_test = Runner(env_test)
 
     trainer.learn(
         timestep=args.timestep,

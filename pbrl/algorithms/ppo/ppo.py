@@ -3,15 +3,16 @@ from typing import Tuple, Optional
 
 import numpy as np
 import torch
+
 from pbrl.algorithms.ppo.buffer import PGBuffer
-from pbrl.algorithms.ppo.policy import PGPolicy
+from pbrl.algorithms.ppo.policy import Policy
 from pbrl.common.trainer import Trainer
 
 
 class PPO(Trainer):
     def __init__(
             self,
-            policy: PGPolicy,
+            policy: Policy,
             batch_size: int = 64,
             chunk_len: Optional[int] = None,
             eps: float = 0.2,
@@ -55,8 +56,13 @@ class PPO(Trainer):
 
     def gae(self):
         # reshape to (env_num, step, ...)
-        observations = self.policy.n2t(np.stack(self.buffer.observations, axis=1))
-        observations_next = self.policy.n2t(self.buffer.observations_next)
+        # normalize obs and obs_next
+        observations = self.policy.n2t(
+            self.policy.normalize_observations(np.stack(self.buffer.observations, axis=1))
+        )
+        observations_next = self.policy.n2t(
+            self.policy.normalize_observations(self.buffer.observations_next)
+        )
         dones = None
         if self.policy.rnn:
             dones = self.policy.n2t(np.stack(self.buffer.dones, axis=1))
@@ -68,6 +74,7 @@ class PPO(Trainer):
         values_next = self.policy.t2n(values_next)
 
         rewards, dones = map(np.asarray, (self.buffer.rewards, self.buffer.dones))
+        rewards = self.policy.normalize_rewards(rewards)
         advantages = np.zeros_like(rewards)
         gae = np.zeros_like(values_next)
         masks = (1 - dones) * self.gamma
@@ -120,18 +127,20 @@ class PPO(Trainer):
         return value_loss
 
     def update(self):
-        loss_info = dict(
-            critic=[],
-            policy=[],
-            entropy=[]
-        )
+        loss_info = dict(critic=[], policy=[], entropy=[])
         self.policy.train()
+
         for i in range(self.repeat):
             if i == 0 or self.recompute_adv:
                 self.gae()
             # sample batch from buffer
             for batch, batch_rnn in self.buffer.generator(self.batch_size):
-                observations, actions, advantages, log_probs_old, returns = map(self.policy.n2t, batch)
+                observations, actions, advantages, log_probs_old, returns = batch
+                observations = self.policy.normalize_observations(observations)
+                observations, actions, advantages, log_probs_old, returns = map(
+                    self.policy.n2t,
+                    (observations, actions, advantages, log_probs_old, returns)
+                )
                 dones = None
                 if self.policy.rnn:
                     dones, = map(self.policy.n2t, batch_rnn)
@@ -167,7 +176,7 @@ class PPO(Trainer):
         torch.save(pkl, filename)
 
     @staticmethod
-    def load(filename: str, policy: PGPolicy, trainer=None):
+    def load(filename: str, policy: Policy, trainer=None):
         if os.path.exists(filename):
             pkl = torch.load(filename, map_location=policy.device)
             policy.actor.load_state_dict(pkl['actor'])

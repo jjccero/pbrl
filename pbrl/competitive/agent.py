@@ -3,11 +3,11 @@ import os
 import numpy as np
 import torch
 
-from pbrl.algorithms.ppo.policy import PGPolicy
+from pbrl.policy.policy import BasePolicy
 
 
 class Agent:
-    def __init__(self, policy: PGPolicy):
+    def __init__(self, policy: BasePolicy):
         self.policy = policy
         self.states_actor = None
 
@@ -25,7 +25,6 @@ class Agent:
                 self.policy.rms_obs.load(pkl['rms_obs'])
 
     def step(self, observations: np.ndarray) -> np.ndarray:
-        observations = self.policy.normalize_observations(observations, update=False)
         actions, self.states_actor = self.policy.act(observations, self.states_actor)
         actions = self.policy.wrap_actions(actions)
         return actions

@@ -4,16 +4,16 @@ import numpy as np
 import torch
 from gym.spaces import Box, Discrete
 from pbrl.policy.net import Actor, Critic
-from pbrl.policy.policy import Policy
+from pbrl.policy.policy import BasePolicy
 
 
-class PGPolicy(Policy):
+class Policy(BasePolicy):
     def __init__(
             self,
             critic: bool = True,
             **kwargs
     ):
-        super(PGPolicy, self).__init__(**kwargs)
+        super(Policy, self).__init__(**kwargs)
         if isinstance(self.action_space, Box):
             continuous = True
             action_dim = self.action_space.shape[0]
@@ -45,6 +45,7 @@ class PGPolicy(Policy):
             observations: np.ndarray,
             states_actor
     ):
+        observations = self.normalize_observations(observations, True)
         observations = self.n2t(observations)
         dists, states_actor = self.actor.forward(observations, states_actor)
         actions = dists.sample()
@@ -61,6 +62,7 @@ class PGPolicy(Policy):
             observations: np.ndarray,
             states_actor
     ):
+        observations = self.normalize_observations(observations)
         observations = self.n2t(observations)
         dists, states_actor = self.actor.forward(observations, states_actor)
         actions = dists.sample()
@@ -73,6 +75,7 @@ class PGPolicy(Policy):
             states_critic=None,
             dones: Optional[torch.Tensor] = None
     ):
+        # normalized observations
         return self.critic.forward(observations, states_critic, dones)
 
     def evaluate_actions(
@@ -81,6 +84,7 @@ class PGPolicy(Policy):
             actions: torch.Tensor,
             dones: Optional[torch.Tensor]
     ):
+        # normalized observations
         dist, _ = self.actor.forward(observations, dones=dones)
         log_probs = dist.log_prob(actions)
         dist_entropy = dist.entropy()

@@ -1,7 +1,7 @@
 import gym
 import torch
 
-from pbrl.algorithms.ppo import PGPolicy
+from pbrl.algorithms.ppo import Policy
 from pbrl.competitive import Agent, CompetitiveEnv
 
 
@@ -16,7 +16,7 @@ class DemoCompetitiveEnv(CompetitiveEnv):
         for i, worker_id in enumerate(worker_ids):
             filename_policy = 'result/{}-0-current/{}.pkl'.format(env_name, worker_id)
             agent = Agent(
-                PGPolicy(
+                Policy(
                     observation_space=self.observation_space.spaces[i],
                     action_space=self.action_space.spaces[i],
                     **config_policy

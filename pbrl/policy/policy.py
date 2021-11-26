@@ -22,7 +22,7 @@ def get_action_wrapper(action_space, clip_fn: str) -> Optional[Callable[[np.ndar
     return action_wrapper
 
 
-class Policy:
+class BasePolicy:
     def __init__(
             self,
             observation_space,
@@ -65,6 +65,13 @@ class Policy:
     def eval(self):
         pass
 
+    def step(
+            self,
+            observations: np.ndarray,
+            states_actor
+    ):
+        raise NotImplementedError
+
     def act(
             self,
             observations: np.ndarray,
@@ -89,7 +96,7 @@ class Policy:
             observations = np.clip(observations, -self.obs_clip, self.obs_clip)
         return observations
 
-    def normalize_rewards(self, returns: np.ndarray, rewards: np.ndarray, update=False):
+    def normalize_rewards(self, rewards: np.ndarray, update=False, returns: np.ndarray = None):
         if self.reward_norm:
             if update:
                 returns[:] = returns * self.gamma + rewards

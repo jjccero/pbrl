@@ -2,11 +2,12 @@ import copy
 
 import numpy as np
 import torch
+
 from pbrl.policy.net import DeterministicActor, DoubleQ
-from pbrl.policy.policy import Policy
+from pbrl.policy.policy import BasePolicy
 
 
-class TD3Policy(Policy):
+class Policy(BasePolicy):
     def __init__(
             self,
             noise_explore=0.1,
@@ -14,7 +15,7 @@ class TD3Policy(Policy):
             critic=True,
             **kwargs
     ):
-        super(TD3Policy, self).__init__(**kwargs)
+        super(Policy, self).__init__(**kwargs)
         config_net = dict(
             obs_dim=self.observation_space.shape,
             action_dim=self.action_space.shape[0],
@@ -54,10 +55,13 @@ class TD3Policy(Policy):
             states_actor,
             random: False
     ):
+        observations = self.normalize_observations(observations, True)
         if random:
             actions = self.random_action(observations.shape[0])
         else:
-            actions, states_actor = self.act(observations, states_actor)
+            observations = self.n2t(observations)
+            actions, states_actor = self.actor.forward(observations, states_actor)
+            actions = self.t2n(actions)
             eps = (self.noise_explore * np.random.randn(*actions.shape)).clip(-self.noise_clip, self.noise_clip)
             actions = (actions + eps).clip(-1.0, 1.0)
         return actions, states_actor
@@ -68,6 +72,7 @@ class TD3Policy(Policy):
             observations: np.ndarray,
             states_actor
     ):
+        observations = self.normalize_observations(observations)
         observations = self.n2t(observations)
         actions, states_actor = self.actor.forward(observations, states_actor)
         actions = self.t2n(actions)

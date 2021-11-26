@@ -3,7 +3,7 @@ from typing import List
 
 import numpy as np
 
-from pbrl.algorithms.ppo.policy import PGPolicy
+from pbrl.algorithms.ppo.policy import Policy
 
 
 class MultiPolicyRunner:
@@ -32,7 +32,7 @@ class MultiPolicyRunner:
             self.env.render()
             time.sleep(self.render)
 
-    def run(self, policies: List[PGPolicy]):
+    def run(self, policies: List[Policy]):
         timestep = 0
         episode = 0
         episode_rewards = tuple([] for _ in range(self.policy_num))
@@ -42,11 +42,11 @@ class MultiPolicyRunner:
             policy.eval()
 
         while True:
-            observations = tuple(map(PGPolicy.normalize_observations, policies, self.observations))
+            observations = tuple(map(Policy.normalize_observations, policies, self.observations))
             actions, log_probs, self.states_actor = zip(
-                *map(PGPolicy.step, policies, observations, self.states_actor)
+                *map(Policy.step, policies, observations, self.states_actor)
             )
-            actions_ = tuple(map(PGPolicy.wrap_actions, policies, actions))
+            actions_ = tuple(map(Policy.wrap_actions, policies, actions))
             self.observations, rewards, dones, infos = self.env.step(actions_)
 
             timestep += self.env_num

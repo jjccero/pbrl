@@ -5,7 +5,7 @@ import gym
 import numpy as np
 import torch
 
-from pbrl.algorithms.ppo import PPO, Runner, PGPolicy
+from pbrl.algorithms.ppo import PPO, Runner, Policy
 from pbrl.common import Logger, update_dict
 from pbrl.competitive import CompetitiveEnv, Agent, MultiDummyEnv, MultiPolicyRunner, CompetitivePBT
 from pbrl.env import DummyVecEnv
@@ -19,7 +19,7 @@ class TrainEnv(CompetitiveEnv):
 
     def init(self, config_policy, **kwargs):
         agent = Agent(
-            PGPolicy(
+            Policy(
                 observation_space=self.observation_space,
                 action_space=self.action_space,
                 **config_policy
@@ -105,7 +105,7 @@ def worker_fn(
     env_train.seed(seed_worker)
     eval_env.seed(seed_worker)
 
-    policy = PGPolicy(
+    policy = Policy(
         observation_space=env_train.observation_space,
         action_space=env_train.action_space,
         **config_policy
@@ -115,7 +115,7 @@ def worker_fn(
     trainer.save(filename_policy)
     trainer.save('{}/{}-{}.pkl'.format(history_dir, trainer.iteration, worker_id))
     # define opponents' policies
-    policy_opponent = PGPolicy(
+    policy_opponent = Policy(
         observation_space=env_train.observation_space,
         action_space=env_train.action_space,
         critic=False,
@@ -123,7 +123,7 @@ def worker_fn(
     )
     policies = [policy, policy_opponent]
 
-    runner_train = Runner(env_train, policy)
+    runner_train = Runner(env_train)
     runner_eval = MultiPolicyRunner(eval_env, policy_num=2, episode_num=episode_num_test)
     info = dict()
     while True:
