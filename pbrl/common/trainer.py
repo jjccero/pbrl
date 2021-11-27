@@ -2,7 +2,6 @@ from abc import abstractmethod
 from typing import Optional
 
 import torch
-
 from pbrl.common.logger import update_dict, Logger
 from pbrl.common.runner import BaseRunner
 from pbrl.policy.policy import BasePolicy
@@ -30,8 +29,8 @@ class Trainer:
             timestep: int,
             runner_train: BaseRunner,
             timestep_update: int,
-            logger: Logger,
-            log_interval: int,
+            logger: Optional[Logger] = None,
+            log_interval=0,
             runner_test: Optional[BaseRunner] = None,
             test_interval=0,
             episode_test=0,

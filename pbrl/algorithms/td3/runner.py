@@ -71,7 +71,7 @@ class Runner(BaseRunner):
             if (timestep_num and timestep >= timestep_num) or (episode_num and episode >= episode_num):
                 break
 
-        if episode_num:
+        if episode:
             return dict(
                 episode=episode,
                 timestep=timestep,

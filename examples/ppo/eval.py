@@ -42,7 +42,7 @@ def main():
     # load policy from disk
     PPO.load(filename_policy, policy)
     # define test runner
-    runner_test = Runner(env_test, render=args.render)
+    runner_test = Runner(env=env_test, render=args.render)
     while True:
         try:
             runner_test.reset()

@@ -20,7 +20,7 @@ class PPO(Trainer):
             gae_lambda: float = 0.95,
             repeat: int = 10,
             lr: float = 3e-4,
-            weight_decay: float = 1e-6,
+            weight_decay: float = 0.0,
             grad_norm: float = 0.5,
             entropy_coef: float = 0.0,
             vf_coef: float = 0.5,

@@ -47,15 +47,14 @@ class TD3(Trainer):
             lr=self.lr_critic
         )
 
-    def actor_loss(self, observations: torch.Tensor):
+    def policy_loss(self, observations: torch.Tensor) -> torch.Tensor:
         actions, _ = self.policy.actor.forward(observations)
         if self.double_q:
             q1, q2 = self.policy.critic.forward(observations, actions)
-            policy_loss = (-torch.min(q1, q2)).mean()
+            policy_loss = torch.min(q1, q2).mean()
         else:
             # origin TD3 only use Q1
-            q1 = self.policy.critic.Q1(observations, actions)
-            policy_loss = (-q1).mean()
+            policy_loss = self.policy.critic.Q1(observations, actions).mean()
         return policy_loss
 
     def critic_loss(
@@ -104,7 +103,8 @@ class TD3(Trainer):
         self.optimizer_critic.step()
 
         if self.iteration % self.policy_freq == 0:
-            actor_loss = self.actor_loss(observations)
+            policy_loss = self.policy_loss(observations)
+            actor_loss = -policy_loss
             self.optimizer_actor.zero_grad()
             actor_loss.backward()
             self.optimizer_actor.step()
@@ -112,7 +112,7 @@ class TD3(Trainer):
             Trainer.soft_update(self.policy.critic, self.policy.critic_target, self.tau)
             Trainer.soft_update(self.policy.actor, self.policy.actor_target, self.tau)
 
-            loss_info['actor'] = actor_loss.item()
+            loss_info['policy'] = policy_loss.item()
         loss_info['q1'] = q1_loss.item()
         loss_info['q2'] = q2_loss.item()
         return loss_info

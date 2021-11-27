@@ -53,7 +53,7 @@ class Policy(BasePolicy):
             self,
             observations: np.ndarray,
             states_actor,
-            random: False
+            random=False
     ):
         observations = self.normalize_observations(observations, True)
         if random:

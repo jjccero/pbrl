@@ -27,14 +27,13 @@ pip install -e .
 Train and evaluate CartPole-v0 agent:
 
 ```
-cd examples/ppo
-python train.py 
-python eval.py
+python examples/quick_start.py
 ```
 
 MuJoCo:
 
 ```
+cd examples/ppo
 python train.py --env Walker2d-v3 --obs_norm --reward_norm --recompute_adv --subproc --lr_decay --timestep 3000000 --log_interval 10
 python eval.py --env Walker2d-v3 --obs_norm
 ``` 

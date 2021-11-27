@@ -101,8 +101,8 @@ def main():
     if args.resume:
         PPO.load(filename_policy, policy, trainer)
     # define train and test runner
-    runner_train = Runner(env_train)
-    runner_test = Runner(env_test)
+    runner_train = Runner(env=env_train)
+    runner_test = Runner(env=env_test)
     trainer.learn(
         timestep=args.timestep,
         runner_train=runner_train,
