@@ -63,7 +63,7 @@ class Runner(BaseRunner):
                         policy.reset_state(self.states_actor, i)
                     episode_rewards.append(self.episode_rewards[i])
                     episode_infos.append(infos[i])
-                    self.episode_rewards[i] = 0.
+                    self.episode_rewards[i] = 0.0
                     self.episode_steps[i] = 0
                     if update:
                         self.returns[i] = 0.0

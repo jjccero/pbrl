@@ -3,7 +3,9 @@ from typing import Callable, Optional, Tuple, Any, List, Type
 import numpy as np
 import torch
 from gym.spaces import Box, Discrete
+
 from pbrl.common.rms import RunningMeanStd
+from pbrl.policy.wrapper import TanhWrapper, ClipWrapper
 
 
 def get_action_wrapper(action_space, clip_fn: str) -> Optional[Callable[[np.ndarray], np.ndarray]]:
@@ -12,11 +14,9 @@ def get_action_wrapper(action_space, clip_fn: str) -> Optional[Callable[[np.ndar
         low = action_space.low
         high = action_space.high
         if clip_fn == 'tanh':
-            def action_wrapper(x):
-                return 0.5 * (high - low) * np.tanh(x) + 0.5 * (low + high)
+            return TanhWrapper(low, high)
         elif clip_fn == 'clip':
-            def action_wrapper(x):
-                return 0.5 * (high - low) * np.clip(x, -1.0, 1.0) + 0.5 * (low + high)
+            return ClipWrapper(low, high)
         else:
             raise NotImplementedError
     return action_wrapper

@@ -1,7 +1,7 @@
-from abc import abstractmethod
 from typing import Optional
 
 import torch
+
 from pbrl.common.logger import update_dict, Logger
 from pbrl.common.runner import BaseRunner
 from pbrl.policy.policy import BasePolicy
@@ -20,7 +20,6 @@ class Trainer:
         for param, param_target in zip(net.parameters(), net_target.parameters()):
             param_target.data.copy_((1.0 - tau) * param_target.data + tau * param.data)
 
-    @abstractmethod
     def update(self) -> dict:
         pass
 

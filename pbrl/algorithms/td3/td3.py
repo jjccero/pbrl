@@ -48,6 +48,7 @@ class TD3(Trainer):
         )
 
     def policy_loss(self, observations: torch.Tensor) -> torch.Tensor:
+        self.policy.critic.eval()
         actions, _ = self.policy.actor.forward(observations)
         if self.double_q:
             q1, q2 = self.policy.critic.forward(observations, actions)

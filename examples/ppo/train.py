@@ -34,7 +34,6 @@ def main():
     parser.add_argument('--vf_coef', type=float, default=0.5)
     parser.add_argument('--entropy_coef', type=float, default=0.0)
     parser.add_argument('--repeat', type=int, default=10)
-    parser.add_argument('--value_clip', action='store_true')
     parser.add_argument('--adv_norm', action='store_true')
     parser.add_argument('--recompute_adv', action='store_true')
     parser.add_argument('--obs_norm', action='store_true')
@@ -87,7 +86,6 @@ def main():
         grad_norm=args.grad_norm,
         entropy_coef=args.entropy_coef,
         vf_coef=args.vf_coef,
-        value_clip=args.value_clip,
         adv_norm=args.adv_norm,
         recompute_adv=args.recompute_adv
     )

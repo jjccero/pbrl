@@ -31,7 +31,6 @@ def worker_fn(
         grad_norm,
         entropy_coef,
         vf_coef,
-        value_clip,
         adv_norm,
         recompute_adv,
         ready_timestep,
@@ -81,7 +80,6 @@ def worker_fn(
         grad_norm=grad_norm,
         entropy_coef=entropy_coef,
         vf_coef=vf_coef,
-        value_clip=value_clip,
         adv_norm=adv_norm,
         recompute_adv=recompute_adv
     )
@@ -160,7 +158,6 @@ def main():
     parser.add_argument('--vf_coef', type=float, default=0.5)
     parser.add_argument('--entropy_coef', type=float, default=0.0)
     parser.add_argument('--repeat', type=int, default=10)
-    parser.add_argument('--value_clip', action='store_true')
     parser.add_argument('--adv_norm', action='store_true')
     parser.add_argument('--recompute_adv', action='store_true')
     parser.add_argument('--obs_norm', action='store_true')

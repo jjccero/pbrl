@@ -24,7 +24,6 @@ class PPO(Trainer):
             grad_norm: float = 0.5,
             entropy_coef: float = 0.0,
             vf_coef: float = 0.5,
-            value_clip: bool = False,
             adv_norm: bool = False,
             recompute_adv: bool = True
     ):
@@ -44,7 +43,7 @@ class PPO(Trainer):
         self.vf_coef = vf_coef
         self.adv_norm = adv_norm
         self.recompute_adv = recompute_adv
-        self.value_clip = value_clip
+
         self.optimizer = torch.optim.Adam(
             (
                 {'params': self.policy.actor.parameters()},
@@ -56,7 +55,7 @@ class PPO(Trainer):
 
     def gae(self):
         # reshape to (env_num, step, ...)
-        # normalize obs and obs_next
+        # normalize obs and obs_next is obs_norm
         observations = self.policy.n2t(
             self.policy.normalize_observations(np.stack(self.buffer.observations, axis=1))
         )
@@ -110,29 +109,24 @@ class PPO(Trainer):
     def critic_loss(
             self,
             observations: torch.Tensor,
-            advantages: torch.Tensor,
             returns: torch.Tensor,
             dones: Optional[torch.Tensor]
     ) -> torch.Tensor:
         values, _ = self.policy.get_values(observations, dones=dones)
+        # value clipping is removed in the latest implementation (https://github.com/openai/phasic-policy-gradient)
+        # see https://github.com/openai/baselines/issues/445  for details
         # calculate critic loss by MSE
-        if self.value_clip:
-            values_old = returns - advantages
-            vf_loss1 = (values - returns) ** 2
-            vf_loss2 = ((values - values_old).clamp(-self.eps, self.eps) - advantages) ** 2
-            # it makes delta close to advantages
-            value_loss = torch.max(vf_loss1, vf_loss2).mean()
-        else:
-            value_loss = ((values - returns) ** 2).mean()
+        value_loss = ((values - returns) ** 2).mean()
         return value_loss
 
     def update(self):
         loss_info = dict(critic=[], policy=[], entropy=[])
-        self.policy.train()
 
         for i in range(self.repeat):
             if i == 0 or self.recompute_adv:
+                self.policy.eval()
                 self.gae()
+            self.policy.train()
             # sample batch from buffer
             for batch, batch_rnn in self.buffer.generator(self.batch_size):
                 observations, actions, advantages, log_probs_old, returns = batch
@@ -145,7 +139,7 @@ class PPO(Trainer):
                 if self.policy.rnn:
                     dones, = map(self.policy.n2t, batch_rnn)
                 policy_loss, entropy_loss = self.actor_loss(observations, actions, advantages, log_probs_old, dones)
-                critic_loss = self.critic_loss(observations, advantages, returns, dones)
+                critic_loss = self.critic_loss(observations, returns, dones)
                 loss = critic_loss * self.vf_coef - policy_loss - entropy_loss * self.entropy_coef
 
                 self.optimizer.zero_grad()
