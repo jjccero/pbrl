@@ -14,5 +14,5 @@ policy = Policy(
     activation=torch.nn.ReLU,
     device=torch.device('cuda:0') if torch.cuda.is_available() else torch.device('cpu')
 )
-PPO(policy, lr=1e-3).learn(20480, Runner(env), 2048, Logger('quick_start'), 1)
-os.system('tensorboard --logdir quick_start')
+PPO(policy, lr=1e-3).learn(20480, Runner(env), 2048, Logger('result/quick_start'), 1)
+os.system('tensorboard --logdir .')

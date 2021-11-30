@@ -2,7 +2,6 @@ import time
 from typing import Optional
 
 import numpy as np
-
 from pbrl.algorithms.ppo.buffer import PGBuffer
 from pbrl.algorithms.ppo.policy import Policy
 from pbrl.common.runner import BaseRunner
@@ -35,7 +34,7 @@ class Runner(BaseRunner):
                 time.sleep(self.render)
 
             if update:
-                policy.normalize_rewards(rewards, True, self.returns)
+                policy.normalize_rewards(rewards, True, self.returns, dones)
                 # add to buffer
                 buffer.append(
                     observations,  # raw obs
@@ -53,9 +52,6 @@ class Runner(BaseRunner):
                     episode_rewards.append(self.episode_rewards[i])
                     episode_infos.append(infos[i])
                     self.episode_rewards[i] = 0.0
-
-                    if update:
-                        self.returns[i] = 0.0
 
             if (timestep_num and timestep >= timestep_num) or (episode_num and episode >= episode_num):
                 if update:

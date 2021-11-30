@@ -2,7 +2,6 @@ import time
 from typing import Optional
 
 import numpy as np
-
 from pbrl.algorithms.td3.buffer import ReplayBuffer
 from pbrl.algorithms.td3.policy import Policy
 from pbrl.common.runner import BaseRunner
@@ -45,15 +44,17 @@ class Runner(BaseRunner):
                 self.env.render()
                 time.sleep(self.render)
 
+            dones_real = dones & (self.episode_steps < self.max_episode_steps)  # TD3' trick
+
             if update:
-                policy.normalize_rewards(rewards, True, self.returns)
+                policy.normalize_rewards(rewards, True, self.returns, dones_real)
                 # add to buffer
                 buffer.append(
                     observations,  # raw obs
                     actions,
                     self.observations,  # raw obs_next
                     rewards,  # raw reward
-                    dones & (self.episode_steps < self.max_episode_steps)  # TD3' trick
+                    dones_real
                 )
 
             for i in range(self.env_num):
@@ -65,8 +66,6 @@ class Runner(BaseRunner):
                     episode_infos.append(infos[i])
                     self.episode_rewards[i] = 0.0
                     self.episode_steps[i] = 0
-                    if update:
-                        self.returns[i] = 0.0
 
             if (timestep_num and timestep >= timestep_num) or (episode_num and episode >= episode_num):
                 break

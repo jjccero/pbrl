@@ -114,7 +114,7 @@ class PPO(Trainer):
     ) -> torch.Tensor:
         values, _ = self.policy.get_values(observations, dones=dones)
         # value clipping is removed in the latest implementation (https://github.com/openai/phasic-policy-gradient)
-        # see https://github.com/openai/baselines/issues/445  for details
+        # see (https://github.com/openai/baselines/issues/445) for details
         # calculate critic loss by MSE
         value_loss = ((values - returns) ** 2).mean()
         return value_loss

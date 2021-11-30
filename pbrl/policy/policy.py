@@ -3,7 +3,6 @@ from typing import Callable, Optional, Tuple, Any, List, Type
 import numpy as np
 import torch
 from gym.spaces import Box, Discrete
-
 from pbrl.common.rms import RunningMeanStd
 from pbrl.policy.wrapper import TanhWrapper, ClipWrapper
 
@@ -96,13 +95,21 @@ class BasePolicy:
             observations = np.clip(observations, -self.obs_clip, self.obs_clip)
         return observations
 
-    def normalize_rewards(self, rewards: np.ndarray, update=False, returns: np.ndarray = None):
+    def normalize_rewards(
+            self,
+            rewards: np.ndarray,
+            update=False,
+            returns: np.ndarray = None,
+            dones: np.ndarray = None
+    ):
         if self.reward_norm:
             if update:
                 returns[:] = returns * self.gamma + rewards
                 self.rms_reward.update(returns)
+                returns[dones] = 0.0
             rewards = rewards / np.sqrt(self.rms_reward.var + self.rms_reward.eps)
             rewards = np.clip(rewards, -self.reward_clip, self.reward_clip)
+
         return rewards
 
     def wrap_actions(self, actions: np.ndarray):
