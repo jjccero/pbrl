@@ -48,3 +48,7 @@ class ReplayBuffer:
             self.rewards[index],
             self.dones[index]
         )
+
+    def clear(self):
+        self.ptr = 0
+        self.len = 0

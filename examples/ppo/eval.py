@@ -2,7 +2,6 @@ import argparse
 
 import gym
 import torch
-
 from pbrl.algorithms.ppo import Policy, PPO, Runner
 from pbrl.env import DummyVecEnv
 
@@ -10,7 +9,7 @@ from pbrl.env import DummyVecEnv
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('--env', type=str, default='CartPole-v0')
-    parser.add_argument('--log_dir', type=str, default=None)
+    parser.add_argument('--filename', type=str, default=None)
     parser.add_argument('--subproc', action='store_true')
     parser.add_argument('--seed', type=int, default=0)
     parser.add_argument('--rnn', type=str, default=None)
@@ -23,8 +22,10 @@ def main():
     args = parser.parse_args()
     torch.manual_seed(args.seed)
 
-    log_dir = args.log_dir if args.log_dir is not None else '{}-{}'.format(args.env, args.seed)
-    filename_policy = 'result/{}/policy.pkl'.format(log_dir)
+    if args.filename:
+        filename_policy = args.filename
+    else:
+        filename_policy = 'result/{}-{}/policy.pkl'.format(args.env, args.seed)
     # define test environment
     env_test = DummyVecEnv([lambda: gym.make(args.env) for _ in range(args.env_num_test)])
     env_test.seed(args.seed)
