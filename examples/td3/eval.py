@@ -9,7 +9,7 @@ from pbrl.env import DummyVecEnv
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('--env', type=str, default='HalfCheetah-v3')
-    parser.add_argument('--filename', type=str, default=None)
+    parser.add_argument('--filename', type=str, required=True)
     parser.add_argument('--subproc', action='store_true')
     parser.add_argument('--seed', type=int, default=0)
     parser.add_argument('--rnn', type=str, default=None)
@@ -21,11 +21,6 @@ def main():
 
     args = parser.parse_args()
     torch.manual_seed(args.seed)
-
-    if args.filename:
-        filename_policy = args.filename
-    else:
-        filename_policy = 'result/{}-{}/policy.pkl'.format(args.env, args.seed)
 
     # define test environment
     env_test = DummyVecEnv([lambda: gym.make(args.env) for _ in range(args.env_num_test)])
@@ -42,7 +37,7 @@ def main():
         device=torch.device('cuda:0') if torch.cuda.is_available() else torch.device('cpu')
     )
     # load policy from disk
-    TD3.load(filename_policy, policy)
+    TD3.load(args.filename, policy)
     # define test runner
     runner_test = Runner(env_test, policy, render=args.render)
     while True:

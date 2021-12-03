@@ -172,5 +172,5 @@ Tuple(Discrete(3), Box([-inf -inf], [inf inf], (2,), float32))
 >>> 
 ```
 
-------
+---
 *2021, ICCD Lab, Dalian University of Technology. Author: Jingcheng Jiang.*  

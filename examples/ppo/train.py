@@ -1,9 +1,9 @@
 import argparse
+import time
 
 import gym
 import numpy as np
 import torch
-
 from pbrl.algorithms.ppo import PPO, Runner, Policy
 from pbrl.common import Logger
 from pbrl.env import SubProcVecEnv, DummyVecEnv
@@ -12,7 +12,6 @@ from pbrl.env import SubProcVecEnv, DummyVecEnv
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('--env', type=str, default='CartPole-v0')
-    parser.add_argument('--log_dir', type=str, default=None)
     parser.add_argument('--test_interval', type=int, default=10)
     parser.add_argument('--log_interval', type=int, default=1)
     parser.add_argument('--subproc', action='store_true')
@@ -49,9 +48,8 @@ def main():
     torch.manual_seed(args.seed)
     np.random.seed(args.seed)
 
-    log_dir = args.log_dir if args.log_dir is not None else '{}-{}'.format(args.env, args.seed)
-    filename_log = 'result/{}'.format(log_dir)
-    filename_policy = 'result/{}/policy.pkl'.format(log_dir)
+    filename_log = 'result/{}-{}-{}'.format(args.env, args.seed, int(time.time()))
+    filename_policy = '{}/policy.pkl'.format(filename_log)
 
     logger = Logger(filename_log)
     # define train and test environment
@@ -113,6 +111,7 @@ def main():
     )
     # save result
     trainer.save(filename_policy)
+    print(filename_policy)
 
 
 if __name__ == '__main__':

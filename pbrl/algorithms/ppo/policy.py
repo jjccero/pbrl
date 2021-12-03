@@ -1,5 +1,3 @@
-from typing import Optional
-
 import numpy as np
 import torch
 from gym.spaces import Box, Discrete
@@ -64,33 +62,10 @@ class Policy(BasePolicy):
     ):
         observations = self.normalize_observations(observations)
         observations = self.n2t(observations)
-        dists, states_actor = self.actor.forward(observations, states_actor)
+        dists, states_actor = self.actor.forward(observations, states=states_actor)
         actions = dists.sample()
         actions = self.t2n(actions)
         return actions, states_actor
-
-    def get_values(
-            self,
-            observations: torch.Tensor,
-            states_critic=None,
-            dones: Optional[torch.Tensor] = None
-    ):
-        # normalized observations
-        return self.critic.forward(observations, states_critic, dones)
-
-    def evaluate_actions(
-            self,
-            observations: torch.Tensor,
-            actions: torch.Tensor,
-            dones: Optional[torch.Tensor]
-    ):
-        # normalized observations
-        dist, _ = self.actor.forward(observations, dones=dones)
-        log_probs = dist.log_prob(actions)
-        dist_entropy = dist.entropy()
-        if self.actor.continuous:
-            log_probs = log_probs.sum(-1)
-        return log_probs, dist_entropy
 
     def eval(self):
         self.actor.eval()

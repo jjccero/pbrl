@@ -3,7 +3,6 @@ from typing import Tuple, Optional
 
 import numpy as np
 import torch
-
 from pbrl.algorithms.ppo.buffer import PGBuffer
 from pbrl.algorithms.ppo.policy import Policy
 from pbrl.common.trainer import Trainer
@@ -66,8 +65,8 @@ class PPO(Trainer):
         if self.policy.rnn:
             dones = self.policy.n2t(np.stack(self.buffer.dones, axis=1))
         with torch.no_grad():
-            values, states_critic = self.policy.get_values(observations, dones=dones)
-            values_next, _ = self.policy.get_values(observations_next, states_critic=states_critic)
+            values, states_critic = self.policy.critic.forward(observations, dones=dones)
+            values_next, _ = self.policy.critic.forward(observations_next, states=states_critic)
         # reshape to (step, env_num, ...)
         values = self.policy.t2n(values).swapaxes(0, 1)
         values_next = self.policy.t2n(values_next)
@@ -97,13 +96,16 @@ class PPO(Trainer):
     ) -> Tuple[torch.Tensor, torch.Tensor]:
         if self.adv_norm:
             advantages = (advantages - advantages.mean()) / (advantages.std() + 1e-8)
-        log_probs, dist_entropy = self.policy.evaluate_actions(observations, actions, dones)
+        dists, _ = self.policy.actor.forward(observations, dones=dones)
+        log_probs = dists.log_prob(actions)
+        entropy_loss = dists.entropy().mean()
+        if self.policy.actor.continuous:
+            log_probs = log_probs.sum(-1)
         # calculate actor loss by clipping-PPO
         ratio = torch.exp(log_probs - log_probs_old)
         surr1 = ratio * advantages
         surr2 = ratio.clamp(1.0 - self.eps, 1.0 + self.eps) * advantages
         policy_loss = torch.min(surr1, surr2).mean()
-        entropy_loss = dist_entropy.mean()
         return policy_loss, entropy_loss
 
     def critic_loss(
@@ -112,11 +114,11 @@ class PPO(Trainer):
             returns: torch.Tensor,
             dones: Optional[torch.Tensor]
     ) -> torch.Tensor:
-        values, _ = self.policy.get_values(observations, dones=dones)
+        values, _ = self.policy.critic.forward(observations, dones=dones)
         # value clipping is removed in the latest implementation (https://github.com/openai/phasic-policy-gradient)
         # see (https://github.com/openai/baselines/issues/445) for details
         # calculate critic loss by MSE
-        value_loss = ((values - returns) ** 2).mean()
+        value_loss = torch.square(values - returns).mean()
         return value_loss
 
     def update(self):
@@ -139,8 +141,8 @@ class PPO(Trainer):
                 if self.policy.rnn:
                     dones, = map(self.policy.n2t, batch_rnn)
                 policy_loss, entropy_loss = self.actor_loss(observations, actions, advantages, log_probs_old, dones)
-                critic_loss = self.critic_loss(observations, returns, dones)
-                loss = critic_loss * self.vf_coef - policy_loss - entropy_loss * self.entropy_coef
+                value_loss = self.critic_loss(observations, returns, dones)
+                loss = value_loss * self.vf_coef - policy_loss - entropy_loss * self.entropy_coef
 
                 self.optimizer.zero_grad()
                 loss.backward()
@@ -148,7 +150,7 @@ class PPO(Trainer):
                 torch.nn.utils.clip_grad_norm_(self.policy.critic.parameters(), self.grad_norm)
                 self.optimizer.step()
 
-                loss_info['critic'].append(critic_loss.item())
+                loss_info['value'].append(value_loss.item())
                 loss_info['policy'].append(policy_loss.item())
                 loss_info['entropy'].append(entropy_loss.item())
 

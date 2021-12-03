@@ -47,12 +47,7 @@ class Actor(nn.Module):
         self.device = device
         self.to(self.device)
 
-    def forward(
-            self,
-            observations,
-            states: Optional[torch.Tensor] = None,
-            dones: Optional[torch.Tensor] = None
-    ):
+    def forward(self, observations, states=None, dones: Optional[torch.Tensor] = None):
         x = self.f(observations)
         if self.rnn:
             x, states = self.f2(x, states, dones)
@@ -83,7 +78,7 @@ class Critic(nn.Module):
         self.device = device
         self.to(self.device)
 
-    def forward(self, observations, states, dones):
+    def forward(self, observations, states=None, dones: Optional[torch.Tensor] = None):
         x = self.f.forward(observations)
         if self.rnn:
             x, states = self.f2.forward(x, states, dones)

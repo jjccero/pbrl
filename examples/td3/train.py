@@ -1,4 +1,5 @@
 import argparse
+import time
 
 import gym
 import numpy as np
@@ -15,7 +16,6 @@ def main():
     parser.add_argument('--env_num_test', type=int, default=10)
     parser.add_argument('--episode_num_test', type=int, default=10)
     parser.add_argument('--timestep', type=int, default=1000000)
-    parser.add_argument('--log_dir', type=str, default=None)
     parser.add_argument('--test_interval', type=int, default=5000)
     parser.add_argument('--log_interval', type=int, default=5000)
     parser.add_argument('--subproc', action='store_true')
@@ -35,11 +35,11 @@ def main():
     parser.add_argument('--noise_clip', type=float, default=0.5)
     parser.add_argument('--noise_explore', type=float, default=0.1)
     parser.add_argument('--noise_target', type=float, default=0.2)
-
     parser.add_argument('--double_q', action='store_true')  # whether min(Q1,Q2) when updating actor
 
     parser.add_argument('--obs_norm', action='store_true')
     parser.add_argument('--reward_norm', action='store_true')
+    parser.add_argument('--reward_scaling', type=float, default=None)
 
     parser.add_argument('--lr_actor', type=float, default=3e-4)
     parser.add_argument('--lr_critic', type=float, default=3e-4)
@@ -49,9 +49,8 @@ def main():
     torch.manual_seed(args.seed)
     np.random.seed(args.seed)
 
-    log_dir = args.log_dir if args.log_dir is not None else '{}-{}'.format(args.env, args.seed)
-    filename_log = 'result/{}'.format(log_dir)
-    filename_policy = 'result/{}/policy.pkl'.format(log_dir)
+    filename_log = 'result/{}-{}-{}'.format(args.env, args.seed, int(time.time()))
+    filename_policy = '{}/policy.pkl'.format(filename_log)
 
     logger = Logger(filename_log)
     # define train and test environment
@@ -85,7 +84,8 @@ def main():
         double_q=args.double_q,
         tau=args.tau,
         lr_actor=args.lr_actor,
-        lr_critic=args.lr_critic
+        lr_critic=args.lr_critic,
+        reward_scaling=args.reward_scaling
     )
 
     # define train and test runner
@@ -103,8 +103,8 @@ def main():
         episode_test=args.episode_num_test,
         start_timestep=args.start_timestep
     )
-
     trainer.save(filename_policy)
+    print(filename_policy)
 
 
 if __name__ == '__main__':

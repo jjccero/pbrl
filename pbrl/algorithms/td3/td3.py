@@ -1,7 +1,7 @@
 import os
+from typing import Optional
 
 import torch
-
 from pbrl.algorithms.td3.buffer import ReplayBuffer
 from pbrl.algorithms.td3.policy import Policy
 from pbrl.common.trainer import Trainer
@@ -20,7 +20,8 @@ class TD3(Trainer):
             double_q: bool = False,
             tau: float = 0.005,
             lr_actor: float = 3e-4,
-            lr_critic: float = 3e-4
+            lr_critic: float = 3e-4,
+            reward_scaling: Optional[float] = None
     ):
         super(TD3, self).__init__()
         self.policy = policy
@@ -46,6 +47,7 @@ class TD3(Trainer):
             self.policy.critic.parameters(),
             lr=self.lr_critic
         )
+        self.reward_scaling = reward_scaling
 
     def policy_loss(self, observations: torch.Tensor) -> torch.Tensor:
         self.policy.critic.eval()
@@ -92,6 +94,8 @@ class TD3(Trainer):
         observations, actions, observations_next, rewards, dones = self.buffer.sample(self.batch_size)
         observations = self.policy.normalize_observations(observations)
         observations_next = self.policy.normalize_observations(observations_next)
+        if self.reward_scaling:
+            rewards = rewards / self.reward_scaling
         rewards = self.policy.normalize_rewards(rewards)
         observations, actions, observations_next, rewards, dones = map(
             self.policy.n2t,

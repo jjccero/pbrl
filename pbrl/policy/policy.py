@@ -57,6 +57,7 @@ class BasePolicy:
         self.rms_reward = RunningMeanStd(0.0, 1.0) if self.reward_norm else None
         self.reward_clip = reward_clip
         self._action_wrapper = get_action_wrapper(action_space, clip_fn)
+        self.actor: Optional[torch.nn.Module] = None
 
     def train(self):
         pass
