@@ -60,8 +60,6 @@ def main():
     env_test.seed(args.seed)
     # define policy
     policy = Policy(
-        noise_explore=args.noise_explore,
-        noise_clip=args.noise_clip,
         observation_space=env_train.observation_space,
         action_space=env_train.action_space,
         rnn=args.rnn,
@@ -70,7 +68,9 @@ def main():
         obs_norm=args.obs_norm,
         reward_norm=args.reward_norm,
         gamma=args.gamma,
-        device=torch.device('cuda:0') if torch.cuda.is_available() else torch.device('cpu')
+        device=torch.device('cuda:0') if torch.cuda.is_available() else torch.device('cpu'),
+        noise_explore=args.noise_explore,
+        noise_clip=args.noise_clip
     )
     # define trainer for the task
     trainer = TD3(

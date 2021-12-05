@@ -2,7 +2,7 @@ from typing import Callable, Optional, Tuple, Any, List, Type
 
 import numpy as np
 import torch
-from gym.spaces import Box, Discrete
+from gym.spaces import Box, Discrete, Space
 from pbrl.common.rms import RunningMeanStd
 from pbrl.policy.wrapper import TanhWrapper, ClipWrapper
 
@@ -24,18 +24,18 @@ def get_action_wrapper(action_space, clip_fn: str) -> Optional[Callable[[np.ndar
 class BasePolicy:
     def __init__(
             self,
-            observation_space,
-            action_space,
+            observation_space: Space,
+            action_space: Space,
             hidden_sizes: List[int],
             activation: Type[torch.nn.Module],
-            rnn: Optional[str] = None,
-            clip_fn='clip',
-            obs_norm: bool = False,
-            reward_norm: bool = False,
-            gamma: float = 0.99,
-            obs_clip: float = 10.0,
-            reward_clip: float = 10.0,
-            device=torch.device('cpu')
+            rnn: Optional[str],
+            clip_fn: str,
+            obs_norm: bool,
+            reward_norm: bool,
+            gamma: float,
+            obs_clip: float,
+            reward_clip: float,
+            device: torch.device
     ):
         self.observation_space = observation_space
         self.action_space = action_space
@@ -56,14 +56,9 @@ class BasePolicy:
         self.reward_norm = reward_norm
         self.rms_reward = RunningMeanStd(0.0, 1.0) if self.reward_norm else None
         self.reward_clip = reward_clip
-        self._action_wrapper = get_action_wrapper(action_space, clip_fn)
+        self.action_wrapper = get_action_wrapper(action_space, clip_fn)
         self.actor: Optional[torch.nn.Module] = None
-
-    def train(self):
-        pass
-
-    def eval(self):
-        pass
+        self.critic: Optional[torch.nn.Module] = None
 
     def step(
             self,
@@ -114,8 +109,8 @@ class BasePolicy:
         return rewards
 
     def wrap_actions(self, actions: np.ndarray):
-        if self._action_wrapper:
-            return self._action_wrapper(actions)
+        if self.action_wrapper:
+            return self.action_wrapper(actions)
         else:
             return actions
 

@@ -34,12 +34,8 @@ MuJoCo:
 
 ```
 cd examples/ppo
-python train.py --env Walker2d-v3 --obs_norm --reward_norm --recompute_adv --subproc --lr_decay --timestep 3000000 --log_interval 10
-python eval.py --env Walker2d-v3 --obs_norm
-``` 
-
-Use Recurrent Neural Network:  
-`python train.py --chunk_len 4 --rnn lstm`
+python train.py --obs_norm --reward_norm --recompute_adv --subproc --lr_decay
+```
 
 Use Population Based Training:  
 `python train_pbt.py`
@@ -117,45 +113,12 @@ python eval_competitive.py
 
 ## Custom Tasks
 
-Refer to the [test.py](//env/test.py) to customize your own environment.
-
-### Test Environment
-
-**_TestEnv_** is a simple environment for testing the effectiveness of this algorithm (of course, the algorithm can also
-be implemented by yourself).
-
-It chooses one number randomly in each step and returns the one-hot matrix.  
-If the action taken matches the number chosen in the last 3 steps, you will get a complete reward of 1.
-
-#### Example
+Refer to the [test.py](/pbrl/env/test.py) to customize your own environment.
 
 ```
->>> import pbrl.env
->>> import gym
->>> env = gym.make('Test-v0')
->>> env.seed(0)
->>> env.reset()
-array([1., 0., 0.], dtype=float32)
->>> env.step(9 * 0 + 3 * 0 + 1 * 0)
-(array([0., 1., 0.], dtype=float32), 1.0, False, {'str': 'Completely correct.'})
->>> env.step(9 * 1 + 3 * 0 + 1 * 0)
-(array([1., 0., 0.], dtype=float32), 1.0, False, {'str': 'Completely correct.'})
->>> env.step(9 * 0 + 3 * 1 + 1 * 0)
-(array([0., 1., 0.], dtype=float32), 1.0, False, {'str': 'Completely correct.'})
->>> env.step(9 * 0 + 3 * 1 + 1 * 0)
-(array([0., 1., 0.], dtype=float32), 0.0, False, {'str': 'Completely wrong.'})
->>> env.step(9 * 0 + 3 * 1 + 1 * 0)
-(array([0., 0., 1.], dtype=float32), 0.6666666666666666, False, {'str': 'Partially correct.'})
->>> env.step(9 * 2 + 3 * 0 + 1 * 0)
-(array([1., 0., 0.], dtype=float32), 0.3333333333333333, False, {'str': 'Partially correct.'})
->>> env.step(9 * 0 + 3 * 2 + 1 * 1)
-(array([0., 0., 1.], dtype=float32), 1.0, False, {'str': 'Completely correct.'})
->>>
+cd examples/ppo
+python train.py --env Test-v0 --chunk_len 8 --rnn gru --gamma 0.0 --lr 1e-3 --log_interval 1
 ```
-
-#### Convergence Reward
-
-`python train.py --env Test-v0 --chunk_len 8 --rnn gru --gamma 0.0 --lr 1e-3`
 
 * General RL algorithms will achieve an average reward of 55.5.
 * Because of the state memory unit, RNN based RL algorithms can reach the goal of 100.0.

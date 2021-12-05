@@ -2,7 +2,6 @@ import time
 from typing import List
 
 import numpy as np
-
 from pbrl.algorithms.ppo.policy import Policy
 
 
@@ -37,9 +36,6 @@ class MultiPolicyRunner:
         episode = 0
         episode_rewards = tuple([] for _ in range(self.policy_num))
         episode_infos = tuple([] for _ in range(self.policy_num))
-
-        for policy in policies:
-            policy.eval()
 
         while True:
             observations = tuple(map(Policy.normalize_observations, policies, self.observations))

@@ -1,8 +1,9 @@
 import copy
+from typing import Optional, List, Type
 
 import numpy as np
 import torch
-
+from gym.spaces import Space
 from pbrl.policy.net import DeterministicActor, DoubleQ
 from pbrl.policy.policy import BasePolicy
 
@@ -10,12 +11,37 @@ from pbrl.policy.policy import BasePolicy
 class Policy(BasePolicy):
     def __init__(
             self,
+            observation_space: Space,
+            action_space: Space,
+            hidden_sizes: List[int],
+            activation: Type[torch.nn.Module],
+            rnn: Optional[str] = None,
+            clip_fn='clip',
+            obs_norm: bool = False,
+            reward_norm: bool = False,
+            gamma: float = 0.99,
+            obs_clip: float = 10.0,
+            reward_clip: float = 10.0,
+            device=torch.device('cpu'),
             noise_explore=0.1,
             noise_clip=0.5,
             critic=True,
-            **kwargs
+
     ):
-        super(Policy, self).__init__(**kwargs)
+        super(Policy, self).__init__(
+            observation_space=observation_space,
+            action_space=action_space,
+            hidden_sizes=hidden_sizes,
+            activation=activation,
+            rnn=rnn,
+            clip_fn=clip_fn,
+            obs_norm=obs_norm,
+            reward_norm=reward_norm,
+            gamma=gamma,
+            obs_clip=obs_clip,
+            reward_clip=reward_clip,
+            device=device
+        )
         config_net = dict(
             obs_dim=self.observation_space.shape,
             action_dim=self.action_space.shape[0],
@@ -37,16 +63,6 @@ class Policy(BasePolicy):
 
         self.noise_explore = noise_explore
         self.noise_clip = noise_clip
-
-    def eval(self):
-        self.actor.eval()
-        if self.critic:
-            self.critic.eval()
-
-    def train(self):
-        self.actor.train()
-        if self.critic:
-            self.critic.train()
 
     @torch.no_grad()
     def step(

@@ -1,13 +1,13 @@
 import numpy as np
-from gym.spaces import Box
+from gym.spaces import Space
 
 
 class ReplayBuffer:
     def __init__(
             self,
             buffer_size: int,
-            observation_space: Box,
-            action_space: Box
+            observation_space: Space,
+            action_space: Space
     ):
         self.buffer_size = buffer_size
         self.ptr = 0

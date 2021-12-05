@@ -22,7 +22,7 @@ class PPO(Trainer):
             weight_decay: float = 0.0,
             grad_norm: float = 0.5,
             entropy_coef: float = 0.0,
-            vf_coef: float = 0.5,
+            vf_coef: float = 1.0,
             adv_norm: bool = False,
             recompute_adv: bool = True
     ):
@@ -35,14 +35,13 @@ class PPO(Trainer):
         self.gamma = gamma
         self.gae_lambda = gae_lambda
         self.repeat = repeat
-        self.lr = lr
-        self.weight_decay = weight_decay
-        self.grad_norm = grad_norm
         self.entropy_coef = entropy_coef
         self.vf_coef = vf_coef
         self.adv_norm = adv_norm
         self.recompute_adv = recompute_adv
-
+        self.grad_norm = grad_norm
+        self.lr = lr
+        self.weight_decay = weight_decay
         self.optimizer = torch.optim.Adam(
             (
                 {'params': self.policy.actor.parameters()},
@@ -51,6 +50,9 @@ class PPO(Trainer):
             lr=self.lr,
             weight_decay=self.weight_decay
         )
+        self.ks = ['observations', 'actions', 'advantages', 'log_probs_old', 'returns']
+        if self.policy.rnn:
+            self.ks.append('dones')
 
     def gae(self):
         # reshape to (env_num, step, ...)
@@ -118,42 +120,49 @@ class PPO(Trainer):
         # value clipping is removed in the latest implementation (https://github.com/openai/phasic-policy-gradient)
         # see (https://github.com/openai/baselines/issues/445) for details
         # calculate critic loss by MSE
-        value_loss = torch.square(values - returns).mean()
+        value_loss = 0.5 * torch.square(values - returns).mean()
         return value_loss
 
+    def train_pi_vf(self, loss_info):
+        for mini_batch in self.buffer.generator(self.batch_size, self.ks):
+            mini_batch['observations'] = self.policy.normalize_observations(mini_batch['observations'])
+            mini_batch = {k: self.policy.n2t(v) for k, v in mini_batch.items()}
+            observations = mini_batch['observations']
+            actions = mini_batch['actions']
+            advantages = mini_batch['advantages']
+            log_probs_old = mini_batch['log_probs_old']
+            returns = mini_batch['returns']
+            dones = None
+            if self.policy.rnn:
+                dones = mini_batch['dones']
+            policy_loss, entropy_loss = self.actor_loss(observations, actions, advantages, log_probs_old, dones)
+            value_loss = self.critic_loss(observations, returns, dones)
+            loss = self.vf_coef * value_loss - policy_loss - self.entropy_coef * entropy_loss
+
+            self.optimizer.zero_grad()
+            loss.backward()
+            torch.nn.utils.clip_grad_norm_(self.policy.actor.parameters(), self.grad_norm)
+            torch.nn.utils.clip_grad_norm_(self.policy.critic.parameters(), self.grad_norm)
+            self.optimizer.step()
+
+            loss_info['value'].append(value_loss.item())
+            loss_info['policy'].append(policy_loss.item())
+            loss_info['entropy'].append(entropy_loss.item())
+
     def update(self):
-        loss_info = dict(critic=[], policy=[], entropy=[])
+        loss_info = dict(value=[], policy=[], entropy=[])
+        self.policy.actor.train()
+        self.policy.critic.train()
 
         for i in range(self.repeat):
             if i == 0 or self.recompute_adv:
-                self.policy.eval()
+                self.policy.critic.eval()
                 self.gae()
-            self.policy.train()
+                self.policy.critic.train()
             # sample batch from buffer
-            for batch, batch_rnn in self.buffer.generator(self.batch_size):
-                observations, actions, advantages, log_probs_old, returns = batch
-                observations = self.policy.normalize_observations(observations)
-                observations, actions, advantages, log_probs_old, returns = map(
-                    self.policy.n2t,
-                    (observations, actions, advantages, log_probs_old, returns)
-                )
-                dones = None
-                if self.policy.rnn:
-                    dones, = map(self.policy.n2t, batch_rnn)
-                policy_loss, entropy_loss = self.actor_loss(observations, actions, advantages, log_probs_old, dones)
-                value_loss = self.critic_loss(observations, returns, dones)
-                loss = value_loss * self.vf_coef - policy_loss - entropy_loss * self.entropy_coef
-
-                self.optimizer.zero_grad()
-                loss.backward()
-                torch.nn.utils.clip_grad_norm_(self.policy.actor.parameters(), self.grad_norm)
-                torch.nn.utils.clip_grad_norm_(self.policy.critic.parameters(), self.grad_norm)
-                self.optimizer.step()
-
-                loss_info['value'].append(value_loss.item())
-                loss_info['policy'].append(policy_loss.item())
-                loss_info['entropy'].append(entropy_loss.item())
-
+            self.train_pi_vf(loss_info)
+        self.policy.actor.eval()
+        self.policy.critic.eval()
         # on-policy
         self.buffer.clear()
         return loss_info

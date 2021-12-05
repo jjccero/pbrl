@@ -35,8 +35,16 @@ class PGBuffer:
         self.dones.append(dones)
         self.step += 1
 
-    def generator(self, batch_size: int):
+    def generator(self, batch_size: int, ks):
         env_num = self.observations_next.shape[0]
+        data = {
+            'observations': self.observations,
+            'actions': self.actions,
+            'advantages': self.advantages,
+            'log_probs_old': self.log_probs_old,
+            'returns': self.returns,
+            'dones': self.dones
+        }
         if self.chunk_len:
             assert self.step % self.chunk_len == 0
             assert batch_size % self.chunk_len == 0
@@ -58,17 +66,10 @@ class PGBuffer:
                 arr = np.concatenate(arr)
                 return arr
 
-            observations, actions, advantages, log_probs_old, returns, dones = map(
-                to_rnn_chunk,
-                (self.observations, self.actions, self.advantages, self.log_probs_old, self.returns, self.dones)
-            )
+            batch = {k: to_rnn_chunk(data[k]) for k in ks}
         else:
             buffer_size = self.step * env_num
-            observations, actions, advantages, log_probs_old, returns = map(
-                np.concatenate,
-                (self.observations, self.actions, self.advantages, self.log_probs_old, self.returns)
-            )
-            dones = None
+            batch = {key: np.concatenate(data[key]) for key in ks}
 
         indices = np.arange(buffer_size)
         np.random.shuffle(indices)
@@ -80,8 +81,8 @@ class PGBuffer:
             else:
                 index = indices[start:]
                 start = buffer_size
-            batch_rnn = (dones[index],) if self.chunk_len else None
-            yield (arr[index] for arr in (observations, actions, advantages, log_probs_old, returns)), batch_rnn
+            mini_batch = {k: v[index] for k, v in batch.items()}
+            yield mini_batch
 
     def clear(self):
         self.step = 0

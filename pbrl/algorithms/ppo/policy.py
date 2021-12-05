@@ -1,6 +1,8 @@
+from typing import Optional, List, Type
+
 import numpy as np
 import torch
-from gym.spaces import Box, Discrete
+from gym.spaces import Box, Discrete, Space
 from pbrl.policy.net import Actor, Critic
 from pbrl.policy.policy import BasePolicy
 
@@ -8,10 +10,35 @@ from pbrl.policy.policy import BasePolicy
 class Policy(BasePolicy):
     def __init__(
             self,
-            critic: bool = True,
-            **kwargs
+            observation_space: Space,
+            action_space: Space,
+            hidden_sizes: List[int],
+            activation: Type[torch.nn.Module],
+            rnn: Optional[str] = None,
+            clip_fn='clip',
+            obs_norm: bool = False,
+            reward_norm: bool = False,
+            gamma: float = 0.99,
+            obs_clip: float = 10.0,
+            reward_clip: float = 10.0,
+            device=torch.device('cpu'),
+            actor_type=Actor,
+            critic_type=Critic
     ):
-        super(Policy, self).__init__(**kwargs)
+        super(Policy, self).__init__(
+            observation_space=observation_space,
+            action_space=action_space,
+            hidden_sizes=hidden_sizes,
+            activation=activation,
+            rnn=rnn,
+            clip_fn=clip_fn,
+            obs_norm=obs_norm,
+            reward_norm=reward_norm,
+            gamma=gamma,
+            obs_clip=obs_clip,
+            reward_clip=reward_clip,
+            device=device
+        )
         if isinstance(self.action_space, Box):
             continuous = True
             action_dim = self.action_space.shape[0]
@@ -20,7 +47,7 @@ class Policy(BasePolicy):
             action_dim = self.action_space.n
         else:
             raise not NotImplementedError('Neither Box or Discrete!')
-        self.actor = Actor(
+        self.actor = actor_type(
             obs_dim=self.observation_space.shape,
             action_dim=action_dim,
             hidden_sizes=self.hidden_sizes,
@@ -29,13 +56,16 @@ class Policy(BasePolicy):
             continuous=continuous,
             device=self.device
         )
-        self.critic = Critic(
-            obs_dim=self.observation_space.shape,
-            hidden_sizes=self.hidden_sizes,
-            activation=self.activation,
-            rnn=self.rnn,
-            device=self.device
-        ) if critic else None
+        self.actor.eval()
+        if critic_type:
+            self.critic = critic_type(
+                obs_dim=self.observation_space.shape,
+                hidden_sizes=self.hidden_sizes,
+                activation=self.activation,
+                rnn=self.rnn,
+                device=self.device
+            )
+            self.critic.eval()
 
     @torch.no_grad()
     def step(
@@ -66,13 +96,3 @@ class Policy(BasePolicy):
         actions = dists.sample()
         actions = self.t2n(actions)
         return actions, states_actor
-
-    def eval(self):
-        self.actor.eval()
-        if self.critic:
-            self.critic.eval()
-
-    def train(self):
-        self.actor.train()
-        if self.critic:
-            self.critic.train()

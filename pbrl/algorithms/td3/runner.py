@@ -26,7 +26,6 @@ class Runner(BaseRunner):
         episode_infos = []
 
         update = buffer is not None
-        policy.eval()
 
         while True:
             observations = self.observations

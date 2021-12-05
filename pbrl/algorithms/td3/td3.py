@@ -50,7 +50,6 @@ class TD3(Trainer):
         self.reward_scaling = reward_scaling
 
     def policy_loss(self, observations: torch.Tensor) -> torch.Tensor:
-        self.policy.critic.eval()
         actions, _ = self.policy.actor.forward(observations)
         if self.double_q:
             q1, q2 = self.policy.critic.forward(observations, actions)
@@ -82,14 +81,14 @@ class TD3(Trainer):
             y = rewards + (1.0 - dones) * self.gamma * q_target
 
         q1, q2 = self.policy.critic.forward(observations, actions)
-        q1_loss = 0.5 * ((y - q1) ** 2).mean()
-        q2_loss = 0.5 * ((y - q2) ** 2).mean()
+        q1_loss = 0.5 * torch.square(y - q1).mean()
+        q2_loss = 0.5 * torch.square(y - q2).mean()
 
         return q1_loss, q2_loss
 
     def update(self):
         loss_info = dict()
-        self.policy.train()
+        self.policy.critic.train()
 
         observations, actions, observations_next, rewards, dones = self.buffer.sample(self.batch_size)
         observations = self.policy.normalize_observations(observations)
@@ -107,13 +106,17 @@ class TD3(Trainer):
         critic_loss.backward()
         self.optimizer_critic.step()
 
+        self.policy.critic.eval()
         if self.iteration % self.policy_freq == 0:
+            self.policy.actor.train()
+
             policy_loss = self.policy_loss(observations)
             actor_loss = -policy_loss
             self.optimizer_actor.zero_grad()
             actor_loss.backward()
             self.optimizer_actor.step()
 
+            self.policy.actor.eval()
             Trainer.soft_update(self.policy.critic, self.policy.critic_target, self.tau)
             Trainer.soft_update(self.policy.actor, self.policy.actor_target, self.tau)
 

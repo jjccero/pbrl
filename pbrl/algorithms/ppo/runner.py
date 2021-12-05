@@ -15,7 +15,6 @@ class Runner(BaseRunner):
         episode_infos = []
 
         update = buffer is not None
-        policy.eval()
 
         log_probs: Optional[np.ndarray] = None
         while True:

@@ -5,7 +5,7 @@ import torch.nn as nn
 from pbrl.policy.base import Mlp, Cnn, Rnn, Discrete, Continuous, Deterministic
 
 
-def _init(module: nn.Module):
+def init_weights(module: nn.Module):
     for m in module.modules():
         if isinstance(m, nn.Linear):
             torch.nn.init.zeros_(m.bias)
@@ -43,7 +43,7 @@ class Actor(nn.Module):
             self.dist = Continuous(self.hidden_size, action_dim)
         else:
             self.dist = Discrete(self.hidden_size, action_dim)
-        _init(self)
+        init_weights(self)
         self.device = device
         self.to(self.device)
 
@@ -51,8 +51,8 @@ class Actor(nn.Module):
         x = self.f(observations)
         if self.rnn:
             x, states = self.f2(x, states, dones)
-        dist = self.dist.forward(x)
-        return dist, states
+        dists = self.dist.forward(x)
+        return dists, states
 
 
 class Critic(nn.Module):
@@ -74,7 +74,7 @@ class Critic(nn.Module):
         if self.rnn:
             self.f2 = Rnn(self.hidden_size, activation)
         self.value = Deterministic(self.hidden_size, 1)
-        _init(self)
+        init_weights(self)
         self.device = device
         self.to(self.device)
 

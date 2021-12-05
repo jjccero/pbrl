@@ -11,9 +11,9 @@ from pbrl.env import SubProcVecEnv, DummyVecEnv
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument('--env', type=str, default='CartPole-v0')
+    parser.add_argument('--env', type=str, default='Walker2d-v3')
     parser.add_argument('--test_interval', type=int, default=10)
-    parser.add_argument('--log_interval', type=int, default=1)
+    parser.add_argument('--log_interval', type=int, default=10)
     parser.add_argument('--subproc', action='store_true')
     parser.add_argument('--resume', action='store_true')
     parser.add_argument('--seed', type=int, default=0)
@@ -25,12 +25,12 @@ def main():
     parser.add_argument('--rnn', type=str, default=None)
     parser.add_argument('--env_num_test', type=int, default=10)
     parser.add_argument('--episode_num_test', type=int, default=10)
-    parser.add_argument('--timestep', type=int, default=100000)
+    parser.add_argument('--timestep', type=int, default=3000000)
 
     parser.add_argument('--eps', type=float, default=0.2)
     parser.add_argument('--gamma', type=float, default=0.99)
     parser.add_argument('--gae_lambda', type=float, default=0.95)
-    parser.add_argument('--vf_coef', type=float, default=0.5)
+    parser.add_argument('--vf_coef', type=float, default=1.0)
     parser.add_argument('--entropy_coef', type=float, default=0.0)
     parser.add_argument('--repeat', type=int, default=10)
     parser.add_argument('--adv_norm', action='store_true')
