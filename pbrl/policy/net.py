@@ -29,7 +29,6 @@ class Actor(nn.Module):
             device
     ):
         super(Actor, self).__init__()
-
         self.hidden_size = hidden_sizes[-1]
         if len(obs_dim) == 3:
             self.f = Cnn(obs_dim, hidden_sizes, activation)

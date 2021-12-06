@@ -13,7 +13,7 @@ class PPO(Trainer):
             self,
             policy: Policy,
             batch_size: int = 64,
-            chunk_len: Optional[int] = None,
+            chunk_len: int = 0,
             eps: float = 0.2,
             gamma: float = 0.99,
             gae_lambda: float = 0.95,
@@ -29,8 +29,9 @@ class PPO(Trainer):
         super(PPO, self).__init__()
         self.policy = policy
         # on-policy buffer for ppo
-        self.buffer = PGBuffer(chunk_len)
+        self.buffer = PGBuffer()
         self.batch_size = batch_size
+        self.chunk_len = chunk_len
         self.eps = eps
         self.gamma = gamma
         self.gae_lambda = gae_lambda
@@ -55,8 +56,8 @@ class PPO(Trainer):
             self.ks.append('dones')
 
     def gae(self):
-        # reshape to (env_num, step, ...)
-        # normalize obs and obs_next is obs_norm
+        # reshape to (env_num, step_num, ...)
+        # normalize obs and obs_next if obs_norm
         observations = self.policy.n2t(
             self.policy.normalize_observations(np.stack(self.buffer.observations, axis=1))
         )
@@ -69,7 +70,7 @@ class PPO(Trainer):
         with torch.no_grad():
             values, states_critic = self.policy.critic.forward(observations, dones=dones)
             values_next, _ = self.policy.critic.forward(observations_next, states=states_critic)
-        # reshape to (step, env_num, ...)
+        # reshape to (step_num, env_num, ...)
         values = self.policy.t2n(values).swapaxes(0, 1)
         values_next = self.policy.t2n(values_next)
 
@@ -78,7 +79,7 @@ class PPO(Trainer):
         advantages = np.zeros_like(rewards)
         gae = np.zeros_like(values_next)
         masks = (1 - dones) * self.gamma
-        for t in reversed(range(self.buffer.step)):
+        for t in reversed(range(rewards.shape[0])):
             delta = rewards[t] + masks[t] * values_next - values[t]
             values_next = values[t]
             gae = delta + masks[t] * self.gae_lambda * gae
@@ -100,7 +101,6 @@ class PPO(Trainer):
             advantages = (advantages - advantages.mean()) / (advantages.std() + 1e-8)
         dists, _ = self.policy.actor.forward(observations, dones=dones)
         log_probs = dists.log_prob(actions)
-        entropy_loss = dists.entropy().mean()
         if self.policy.actor.continuous:
             log_probs = log_probs.sum(-1)
         # calculate actor loss by clipping-PPO
@@ -108,6 +108,7 @@ class PPO(Trainer):
         surr1 = ratio * advantages
         surr2 = ratio.clamp(1.0 - self.eps, 1.0 + self.eps) * advantages
         policy_loss = torch.min(surr1, surr2).mean()
+        entropy_loss = dists.entropy().mean()
         return policy_loss, entropy_loss
 
     def critic_loss(
@@ -124,7 +125,7 @@ class PPO(Trainer):
         return value_loss
 
     def train_pi_vf(self, loss_info):
-        for mini_batch in self.buffer.generator(self.batch_size, self.ks):
+        for mini_batch in self.buffer.generator(self.batch_size, self.chunk_len, self.ks):
             mini_batch['observations'] = self.policy.normalize_observations(mini_batch['observations'])
             mini_batch = {k: self.policy.n2t(v) for k, v in mini_batch.items()}
             observations = mini_batch['observations']
@@ -141,8 +142,9 @@ class PPO(Trainer):
 
             self.optimizer.zero_grad()
             loss.backward()
-            torch.nn.utils.clip_grad_norm_(self.policy.actor.parameters(), self.grad_norm)
-            torch.nn.utils.clip_grad_norm_(self.policy.critic.parameters(), self.grad_norm)
+            if self.grad_norm:
+                torch.nn.utils.clip_grad_norm_(self.policy.actor.parameters(), self.grad_norm)
+                torch.nn.utils.clip_grad_norm_(self.policy.critic.parameters(), self.grad_norm)
             self.optimizer.step()
 
             loss_info['value'].append(value_loss.item())
@@ -152,7 +154,6 @@ class PPO(Trainer):
     def update(self):
         loss_info = dict(value=[], policy=[], entropy=[])
         self.policy.actor.train()
-        self.policy.critic.train()
 
         for i in range(self.repeat):
             if i == 0 or self.recompute_adv:

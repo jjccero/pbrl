@@ -50,6 +50,7 @@ Then you can access the training information by visiting http://localhost:6006/ 
 * [examples/](/examples)
 * [pbrl/](/pbrl)
     * [algorithms/](/pbrl/algorithms)
+        * [ppg/](/pbrl/algorithms/ppg) Phasic Policy Gradient
         * [ppo/](/pbrl/algorithms/ppo) Proximal Policy Optimization
         * [td3/](/pbrl/algorithms/td3) Twin Delayed Deep Deterministic Policy Gradient
     * [competitive/](/pbrl/competitive) Multi-agent support

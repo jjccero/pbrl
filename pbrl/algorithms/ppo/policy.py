@@ -88,7 +88,8 @@ class Policy(BasePolicy):
     def act(
             self,
             observations: np.ndarray,
-            states_actor
+            states_actor,
+            deterministic: bool = True
     ):
         observations = self.normalize_observations(observations)
         observations = self.n2t(observations)
