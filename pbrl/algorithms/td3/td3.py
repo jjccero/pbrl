@@ -4,7 +4,7 @@ from typing import Optional
 import torch
 from pbrl.algorithms.td3.buffer import ReplayBuffer
 from pbrl.algorithms.td3.policy import Policy
-from pbrl.common.trainer import Trainer
+from pbrl.algorithms.trainer import Trainer
 
 
 class TD3(Trainer):

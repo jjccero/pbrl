@@ -4,7 +4,7 @@ from typing import Optional
 import numpy as np
 from pbrl.algorithms.td3.buffer import ReplayBuffer
 from pbrl.algorithms.td3.policy import Policy
-from pbrl.common.runner import BaseRunner
+from pbrl.algorithms.runner import BaseRunner
 from pbrl.env.env import VectorEnv
 
 

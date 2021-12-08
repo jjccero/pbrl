@@ -17,10 +17,10 @@ class PPG(PPO):
             eps: float = 0.2,
             gamma: float = 0.99,
             gae_lambda: float = 0.95,
-            lr: float = 3e-4,
+            lr: float = 5e-4,
             grad_norm: float = 0.5,
             entropy_coef: float = 0.0,
-            adv_norm: bool = False,
+            adv_norm: bool = True,
             n_pi: int = 32,
             epoch_pi: int = 1,
             epoch_vf: int = 1,
@@ -37,9 +37,11 @@ class PPG(PPO):
             gae_lambda=gae_lambda,
             repeat=1,
             lr=lr,
+            weight_decay=0.0,
             grad_norm=grad_norm,
             entropy_coef=entropy_coef,
-            adv_norm=adv_norm
+            adv_norm=adv_norm,
+            recompute_adv=False
         )
         self.n_pi = n_pi
         self.epoch_pi = epoch_pi
@@ -191,6 +193,6 @@ class PPG(PPO):
                 self.auxiliary_phase(loss_info)
             self.policy.actor.eval()
             self.aux_buffer.clear()
-        self.policy.critic.eval()
+
         self.buffer.clear()
         return loss_info

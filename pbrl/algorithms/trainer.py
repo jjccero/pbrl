@@ -3,7 +3,7 @@ from typing import Optional
 import torch
 
 from pbrl.common.logger import update_dict, Logger
-from pbrl.common.runner import BaseRunner
+from pbrl.algorithms.runner import BaseRunner
 from pbrl.policy.policy import BasePolicy
 
 

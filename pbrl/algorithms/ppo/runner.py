@@ -4,7 +4,7 @@ from typing import Optional
 import numpy as np
 from pbrl.algorithms.ppo.buffer import PGBuffer
 from pbrl.algorithms.ppo.policy import Policy
-from pbrl.common.runner import BaseRunner
+from pbrl.algorithms.runner import BaseRunner
 
 
 class Runner(BaseRunner):

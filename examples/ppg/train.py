@@ -13,8 +13,8 @@ from pbrl.env import SubProcVecEnv, DummyVecEnv
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('--env', type=str, default='Walker2d-v3')
-    parser.add_argument('--test_interval', type=int, default=32)
-    parser.add_argument('--log_interval', type=int, default=32)
+    parser.add_argument('--test_interval', type=int, default=10)
+    parser.add_argument('--log_interval', type=int, default=10)
     parser.add_argument('--subproc', action='store_true')
     parser.add_argument('--resume', action='store_true')
     parser.add_argument('--seed', type=int, default=0)
@@ -32,19 +32,17 @@ def main():
     parser.add_argument('--gamma', type=float, default=0.99)
     parser.add_argument('--gae_lambda', type=float, default=0.95)
     parser.add_argument('--entropy_coef', type=float, default=0.0)
-    parser.add_argument('--adv_norm', action='store_true')
     parser.add_argument('--obs_norm', action='store_true')
     parser.add_argument('--reward_norm', action='store_true')
 
+    parser.add_argument('--grad_norm', type=float, default=0.5)
     parser.add_argument('--lr', type=float, default=3e-4)
-    parser.add_argument('--grad_norm', type=float, default=None)
-
     parser.add_argument('--lr_aux', type=float, default=3e-4)
     parser.add_argument('--beta_clone', type=float, default=1.0)
-    parser.add_argument('--epoch_pi', type=int, default=1)
-    parser.add_argument('--epoch_vf', type=int, default=1)
+    parser.add_argument('--epoch_pi', type=int, default=4)
+    parser.add_argument('--epoch_vf', type=int, default=4)
     parser.add_argument('--epoch_aux', type=int, default=6)
-    parser.add_argument('--n_pi', type=int, default=32)
+    parser.add_argument('--n_pi', type=int, default=10)
 
     args = parser.parse_args()
 
@@ -85,7 +83,6 @@ def main():
         lr=args.lr,
         grad_norm=args.grad_norm,
         entropy_coef=args.entropy_coef,
-        adv_norm=args.adv_norm,
         lr_aux=args.lr_aux,
         beta_clone=args.beta_clone,
         epoch_aux=args.epoch_aux,

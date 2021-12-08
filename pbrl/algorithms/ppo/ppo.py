@@ -5,7 +5,7 @@ import numpy as np
 import torch
 from pbrl.algorithms.ppo.buffer import PGBuffer
 from pbrl.algorithms.ppo.policy import Policy
-from pbrl.common.trainer import Trainer
+from pbrl.algorithms.trainer import Trainer
 
 
 class PPO(Trainer):
