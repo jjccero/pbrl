@@ -3,6 +3,7 @@ from typing import Tuple, Optional
 
 import numpy as np
 import torch
+
 from pbrl.algorithms.ppo.buffer import PGBuffer
 from pbrl.algorithms.ppo.policy import Policy
 from pbrl.algorithms.trainer import Trainer
@@ -23,8 +24,8 @@ class PPO(Trainer):
             grad_norm: float = 0.5,
             entropy_coef: float = 0.0,
             vf_coef: float = 1.0,
-            adv_norm: bool = False,
-            recompute_adv: bool = True
+            adv_norm: bool = True,
+            recompute_adv: bool = False
     ):
         super(PPO, self).__init__()
         self.policy = policy

@@ -23,7 +23,7 @@ def main():
     parser.add_argument('--batch_size', type=int, default=64)
     parser.add_argument('--chunk_len', type=int, default=None)
     parser.add_argument('--rnn', type=str, default=None)
-    parser.add_argument('--env_num_test', type=int, default=10)
+    parser.add_argument('--env_num_test', type=int, default=2)
     parser.add_argument('--episode_num_test', type=int, default=10)
     parser.add_argument('--timestep', type=int, default=3000000)
 
@@ -55,7 +55,7 @@ def main():
     # define train and test environment
     env_class = SubProcVecEnv if args.subproc else DummyVecEnv
     env_train = env_class([lambda: gym.make(args.env) for _ in range(args.env_num)])
-    env_test = env_class([lambda: gym.make(args.env) for _ in range(args.env_num_test)])
+    env_test = DummyVecEnv([lambda: gym.make(args.env) for _ in range(args.env_num_test)])
     env_train.seed(args.seed)
     env_test.seed(args.seed)
     # define policy

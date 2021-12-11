@@ -1,9 +1,8 @@
 from typing import Optional
 
 import torch
-
-from pbrl.common.logger import update_dict, Logger
 from pbrl.algorithms.runner import BaseRunner
+from pbrl.common.logger import update_dict, Logger
 from pbrl.policy.policy import BasePolicy
 
 
@@ -37,7 +36,8 @@ class Trainer:
     ):
         timestep += self.timestep
         info = dict()
-        runner_train.reset()
+        if runner_train.observations is None:
+            runner_train.reset()
 
         if log_interval and test_interval and self.timestep == 0:
             runner_test.reset()

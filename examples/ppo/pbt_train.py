@@ -1,4 +1,5 @@
 import argparse
+import time
 from multiprocessing.connection import Connection
 
 import gym
@@ -13,75 +14,42 @@ from pbrl.pbt import PBT
 
 def worker_fn(
         worker_num: int, worker_id: int, remote: Connection, remote_parent: Connection,
+        trainer_config: dict,
+        policy_config: dict,
         env,
         seed,
         env_num,
         env_num_test,
-        obs_norm,
-        reward_norm,
-        gamma,
-        chunk_len,
-        rnn,
-        batch_size,
-        eps,
-        gae_lambda,
-        repeat,
-        lr,
-        weight_decay,
-        grad_norm,
-        entropy_coef,
-        vf_coef,
-        adv_norm,
-        recompute_adv,
         ready_timestep,
         log_interval,
         buffer_size,
-        episode_num_test
+        episode_num_test,
+        log_dir: str
 ):
     remote_parent.close()
 
     seed_worker = seed + worker_id
     torch.manual_seed(seed_worker)
     np.random.seed(seed_worker)
-
-    log_dir = '{}-{}-PBT-{}'.format(env, seed, worker_id)
-    filename_log = 'result/{}'.format(log_dir)
-    filename_policy = 'result/{}/policy.pkl'.format(log_dir)
-    logger = Logger(filename_log)
-    # define train and test environment
     env_train = DummyVecEnv([lambda: gym.make(env) for _ in range(env_num)])
     env_test = DummyVecEnv([lambda: gym.make(env) for _ in range(env_num_test)])
-
     env_train.seed(seed_worker)
     env_test.seed(seed_worker)
+
+    filename_log = '{}/{}'.format(log_dir, worker_id)
+    filename_policy = '{}/policy.pkl'.format(filename_log)
+    logger = Logger(filename_log)
+
     # define policy
     policy = Policy(
         observation_space=env_train.observation_space,
         action_space=env_train.action_space,
-        rnn=rnn,
-        hidden_sizes=[64, 64],
-        activation=torch.nn.Tanh,
-        obs_norm=obs_norm,
-        reward_norm=reward_norm,
-        gamma=gamma,
-        device=torch.device('cuda:0')
+        **policy_config
     )
     # define trainer for the task
     trainer = PPO(
         policy,
-        batch_size=batch_size,
-        chunk_len=chunk_len,
-        eps=eps,
-        gamma=gamma,
-        gae_lambda=gae_lambda,
-        repeat=repeat,
-        lr=lr,
-        weight_decay=weight_decay,
-        grad_norm=grad_norm,
-        entropy_coef=entropy_coef,
-        vf_coef=vf_coef,
-        adv_norm=adv_norm,
-        recompute_adv=recompute_adv
+        **trainer_config
     )
     PPO.load(filename_policy, policy, trainer)
     # define train and test runner
@@ -145,32 +113,37 @@ def main():
 
     parser.add_argument('--env_num', type=int, default=16)
     parser.add_argument('--buffer_size', type=int, default=2048)
-    parser.add_argument('--batch_size', type=int, default=64)
-    parser.add_argument('--chunk_len', type=int, default=None)
-    parser.add_argument('--rnn', type=str, default=None)
-    parser.add_argument('--env_num_test', type=int, default=20)
-    parser.add_argument('--episode_num_test', type=int, default=100)
-    parser.add_argument('--ready_timestep', type=int, default=100000)
-
-    parser.add_argument('--eps', type=float, default=0.2)
-    parser.add_argument('--gamma', type=float, default=0.99)
-    parser.add_argument('--gae_lambda', type=float, default=0.95)
-    parser.add_argument('--vf_coef', type=float, default=0.5)
-    parser.add_argument('--entropy_coef', type=float, default=0.0)
-    parser.add_argument('--repeat', type=int, default=10)
-    parser.add_argument('--adv_norm', action='store_true')
-    parser.add_argument('--recompute_adv', action='store_true')
-    parser.add_argument('--obs_norm', action='store_true')
-    parser.add_argument('--reward_norm', action='store_true')
-
-    parser.add_argument('--lr', type=float, default=3e-4)
-    parser.add_argument('--grad_norm', type=float, default=0.5)
-    parser.add_argument('--weight_decay', type=float, default=0.0)
+    parser.add_argument('--env_num_test', type=int, default=2)
+    parser.add_argument('--episode_num_test', type=int, default=10)
+    parser.add_argument('--ready_timestep', type=int, default=204800)
 
     args = parser.parse_args()
-
+    policy_config = dict(
+        rnn=None,
+        hidden_sizes=[64, 64],
+        activation=torch.nn.Tanh,
+        obs_norm=True,
+        reward_norm=True,
+        gamma=0.99,
+        device=torch.device('cuda:0')
+    )
+    trainer_config = dict(
+        batch_size=64,
+        chunk_len=None,
+        eps=0.2,
+        gamma=policy_config['gamma'],
+        gae_lambda=0.95,
+        repeat=10,
+        lr=3e-4,
+        entropy_coef=0.0,
+        adv_norm=False,
+        recompute_adv=True
+    )
     pbt = PBT(
         worker_fn=worker_fn,
+        policy_config=policy_config,
+        trainer_config=trainer_config,
+        log_dir='result/{}/{}-{}'.format(args.env, args.seed, int(time.time())),
         **vars(args)
     )
     pbt.seed(args.seed)

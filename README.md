@@ -30,15 +30,22 @@ Train and evaluate CartPole-v0 agent:
 python examples/quick_start.py
 ```
 
+MountainCar-v0 (rl-baselines3-zoo):
+
+```
+cd examples/ppo
+python train.py --obs_norm --reward_norm --adv_norm --gae_lambda 0.98 --repeat 4 --buffer_size 256 --env MountainCar-v0
+```
+
 MuJoCo:
 
 ```
 cd examples/ppo
-python train.py --obs_norm --reward_norm --recompute_adv --subproc --lr_decay
+python train.py --obs_norm --reward_norm --recompute_adv --lr_decay --subproc
 ```
 
 Use Population Based Training:  
-`python train_pbt.py`
+`python pbt_train.py`
 
 Open a new terminal:  
 `tensorboard --logdir result`

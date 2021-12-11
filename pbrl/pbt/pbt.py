@@ -45,10 +45,6 @@ class PBT:
         self.exploit = exploit
         self.rs = np.random.RandomState()
         self.state = dict()
-        self.init()
-
-    def init(self):
-        pass
 
     def eval(self):
         for remote, data in zip(self.remotes, self.datas):

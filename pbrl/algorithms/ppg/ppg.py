@@ -2,10 +2,10 @@ from typing import Optional
 
 import numpy as np
 import torch
-from pbrl.algorithms.ppo import PPO, Policy
 from torch.distributions import Normal, Categorical
 
 from pbrl.algorithms.ppg.aux_buffer import AuxBuffer
+from pbrl.algorithms.ppo import PPO, Policy
 
 
 class PPG(PPO):
@@ -20,7 +20,7 @@ class PPG(PPO):
             lr: float = 5e-4,
             grad_norm: float = 0.5,
             entropy_coef: float = 0.0,
-            adv_norm: bool = True,
+            aux_batch_size: int = 256,
             n_pi: int = 32,
             epoch_pi: int = 1,
             epoch_vf: int = 1,
@@ -40,9 +40,10 @@ class PPG(PPO):
             weight_decay=0.0,
             grad_norm=grad_norm,
             entropy_coef=entropy_coef,
-            adv_norm=adv_norm,
+            adv_norm=True,
             recompute_adv=False
         )
+        self.aux_batch_size = aux_batch_size
         self.n_pi = n_pi
         self.epoch_pi = epoch_pi
         self.epoch_vf = epoch_vf
@@ -108,7 +109,7 @@ class PPG(PPO):
             loss_info['entropy'].append(entropy_loss.item())
 
     def auxiliary_phase(self, loss_info):
-        for mini_batch in self.aux_buffer.generator(self.batch_size, self.chunk_len, self.ks_aux):
+        for mini_batch in self.aux_buffer.generator(self.aux_batch_size, self.chunk_len, self.ks_aux):
             mini_batch['observations'] = self.policy.normalize_observations(mini_batch['observations'])
             mini_batch = {k: self.policy.n2t(v) for k, v in mini_batch.items()}
             observations = mini_batch['observations']

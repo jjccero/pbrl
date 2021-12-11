@@ -4,10 +4,11 @@ import time
 import gym
 import numpy as np
 import torch
+
 from pbrl.algorithms.ppg import AuxActor, PPG
 from pbrl.algorithms.ppo import Runner, Policy
 from pbrl.common import Logger
-from pbrl.env import SubProcVecEnv, DummyVecEnv
+from pbrl.env import DummyVecEnv
 
 
 def main():
@@ -15,28 +16,28 @@ def main():
     parser.add_argument('--env', type=str, default='Walker2d-v3')
     parser.add_argument('--test_interval', type=int, default=10)
     parser.add_argument('--log_interval', type=int, default=10)
-    parser.add_argument('--subproc', action='store_true')
     parser.add_argument('--resume', action='store_true')
     parser.add_argument('--seed', type=int, default=0)
+    parser.add_argument('--timestep', type=int, default=1000000)
+    parser.add_argument('--env_num_test', type=int, default=2)
+    parser.add_argument('--episode_num_test', type=int, default=10)
 
-    parser.add_argument('--env_num', type=int, default=16)
-    parser.add_argument('--buffer_size', type=int, default=2048)
-    parser.add_argument('--batch_size', type=int, default=64)
+    # PPO hyperparameters
+    parser.add_argument('--env_num', type=int, default=2)
     parser.add_argument('--chunk_len', type=int, default=None)
     parser.add_argument('--rnn', type=str, default=None)
-    parser.add_argument('--env_num_test', type=int, default=10)
-    parser.add_argument('--episode_num_test', type=int, default=10)
-    parser.add_argument('--timestep', type=int, default=3000000)
-
+    parser.add_argument('--buffer_size', type=int, default=2048)
+    parser.add_argument('--batch_size', type=int, default=64)
     parser.add_argument('--eps', type=float, default=0.2)
     parser.add_argument('--gamma', type=float, default=0.99)
     parser.add_argument('--gae_lambda', type=float, default=0.95)
     parser.add_argument('--entropy_coef', type=float, default=0.0)
     parser.add_argument('--obs_norm', action='store_true')
     parser.add_argument('--reward_norm', action='store_true')
-
     parser.add_argument('--grad_norm', type=float, default=0.5)
     parser.add_argument('--lr', type=float, default=3e-4)
+    # PPG hyperparameters
+    parser.add_argument('--aux_batch_size', type=int, default=256)
     parser.add_argument('--lr_aux', type=float, default=3e-4)
     parser.add_argument('--beta_clone', type=float, default=1.0)
     parser.add_argument('--epoch_pi', type=int, default=4)
@@ -54,9 +55,8 @@ def main():
 
     logger = Logger(filename_log)
     # define train and test environment
-    env_class = SubProcVecEnv if args.subproc else DummyVecEnv
-    env_train = env_class([lambda: gym.make(args.env) for _ in range(args.env_num)])
-    env_test = env_class([lambda: gym.make(args.env) for _ in range(args.env_num_test)])
+    env_train = DummyVecEnv([lambda: gym.make(args.env) for _ in range(args.env_num)])
+    env_test = DummyVecEnv([lambda: gym.make(args.env) for _ in range(args.env_num_test)])
     env_train.seed(args.seed)
     env_test.seed(args.seed)
     # define policy
@@ -83,6 +83,7 @@ def main():
         lr=args.lr,
         grad_norm=args.grad_norm,
         entropy_coef=args.entropy_coef,
+        aux_batch_size=args.aux_batch_size,
         lr_aux=args.lr_aux,
         beta_clone=args.beta_clone,
         epoch_aux=args.epoch_aux,

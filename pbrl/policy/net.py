@@ -2,6 +2,7 @@ from typing import Optional, List
 
 import torch
 import torch.nn as nn
+
 from pbrl.policy.base import Mlp, Cnn, Rnn, Discrete, Continuous, Deterministic
 
 
@@ -9,7 +10,7 @@ def init_weights(module: nn.Module):
     for m in module.modules():
         if isinstance(m, nn.Linear):
             torch.nn.init.zeros_(m.bias)
-            torch.nn.init.orthogonal_(m.weight)
+            torch.nn.init.orthogonal_(m.weight, 1.41)
         elif isinstance(m, nn.GRU):
             torch.nn.init.zeros_(m.bias_ih_l0)
             torch.nn.init.zeros_(m.bias_hh_l0)
