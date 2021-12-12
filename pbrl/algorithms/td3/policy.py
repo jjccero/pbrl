@@ -4,7 +4,7 @@ from typing import Optional, List, Type
 import numpy as np
 import torch
 from gym.spaces import Space
-from pbrl.policy.net import DeterministicActor, DoubleQ
+from pbrl.algorithms.td3.net import DeterministicActor, DoubleQ
 from pbrl.policy.policy import BasePolicy
 
 
@@ -25,8 +25,7 @@ class Policy(BasePolicy):
             device=torch.device('cpu'),
             noise_explore=0.1,
             noise_clip=0.5,
-            critic=True,
-
+            critic=True
     ):
         super(Policy, self).__init__(
             observation_space=observation_space,
@@ -46,15 +45,14 @@ class Policy(BasePolicy):
             obs_dim=self.observation_space.shape,
             action_dim=self.action_space.shape[0],
             hidden_sizes=self.hidden_sizes,
-            activation=self.activation,
-            device=self.device
+            activation=self.activation
         )
-        self.actor = DeterministicActor(rnn=None, **config_net)
+        self.actor = DeterministicActor(rnn=None, **config_net).to(self.device)
         self.actor_target = copy.deepcopy(self.actor)
         self.actor_target.eval()
         if critic:
             # the critic may be centerQ
-            self.critic = DoubleQ(**config_net)
+            self.critic = DoubleQ(**config_net).to(self.device)
             self.critic_target = copy.deepcopy(self.critic)
             self.critic_target.eval()
         else:

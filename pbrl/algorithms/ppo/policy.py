@@ -3,7 +3,7 @@ from typing import Optional, List, Type
 import numpy as np
 import torch
 from gym.spaces import Box, Discrete, Space
-from pbrl.policy.net import Actor, Critic
+from pbrl.algorithms.ppo.net import Actor, Critic
 from pbrl.policy.policy import BasePolicy
 
 
@@ -53,18 +53,16 @@ class Policy(BasePolicy):
             hidden_sizes=self.hidden_sizes,
             activation=self.activation,
             rnn=self.rnn,
-            continuous=continuous,
-            device=self.device
-        )
+            continuous=continuous
+        ).to(self.device)
         self.actor.eval()
         if critic_type:
             self.critic = critic_type(
                 obs_dim=self.observation_space.shape,
                 hidden_sizes=self.hidden_sizes,
                 activation=self.activation,
-                rnn=self.rnn,
-                device=self.device
-            )
+                rnn=self.rnn
+            ).to(self.device)
             self.critic.eval()
 
     @torch.no_grad()

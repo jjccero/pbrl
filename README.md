@@ -67,7 +67,6 @@ Then you can access the training information by visiting http://localhost:6006/ 
     * [pbt/](/pbrl/pbt) Population Based Training
     * [policy/](/pbrl/policy)
         * [base.py](/pbrl/policy/base.py) MLP, CNN and RNN
-        * [net.py](/pbrl/policy/net.py) Actor-Critic
         * [policy.py](/pbrl/policy/policy.py) action wrapper and policy
 
 ## Algorithm

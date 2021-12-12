@@ -26,7 +26,6 @@ class Mlp(nn.Module):
             mlp.append(activation())
             last_size = hidden_size
         self.mlps = nn.Sequential(*mlp)
-        init_weights(self)
 
     def forward(self, x):
         if self.flat:
@@ -47,7 +46,6 @@ class Cnn(nn.Module):
         w = ((w - 4) // 2 - 4) // 2
         self.mlp = nn.Linear(h * w * 16, hidden_size)
         self.activation = activation()
-        init_weights(self)
 
     def forward(self, x):
         x = x.transpose(-1, -3)
@@ -76,7 +74,6 @@ class Rnn(nn.Module):
         else:
             raise NotImplementedError
         self.activation = activation()
-        init_weights(self)
 
     def forward(self, x, states, dones):
         if len(x.shape) == 3:
@@ -112,7 +109,6 @@ class Discrete(nn.Module):
     def __init__(self, hidden_size, action_dim):
         super(Discrete, self).__init__()
         self.logits = nn.Linear(hidden_size, action_dim)
-        init_weights(self, 0.01)
 
     def forward(self, x):
         logits = self.logits(x)
@@ -124,8 +120,6 @@ class Continuous(nn.Module):
         super(Continuous, self).__init__()
         self.mean = nn.Linear(hidden_size, action_dim)
         self.logstd = nn.Parameter(torch.zeros(action_dim))
-        init_weights(self, 0.01)
-        torch.nn.init.constant_(self.logstd, -0.5)
 
     def forward(self, x):
         mean = self.mean(x)
@@ -137,7 +131,6 @@ class Deterministic(nn.Module):
     def __init__(self, hidden_size, output_dim):
         super(Deterministic, self).__init__()
         self.x = nn.Linear(hidden_size, output_dim)
-        init_weights(self, 1)
 
     def forward(self, x):
         return self.x(x)
