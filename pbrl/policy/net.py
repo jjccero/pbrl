@@ -6,18 +6,6 @@ import torch.nn as nn
 from pbrl.policy.base import Mlp, Cnn, Rnn, Discrete, Continuous, Deterministic
 
 
-def init_weights(module: nn.Module):
-    for m in module.modules():
-        if isinstance(m, nn.Linear):
-            torch.nn.init.zeros_(m.bias)
-            torch.nn.init.orthogonal_(m.weight, 1.41)
-        elif isinstance(m, nn.GRU):
-            torch.nn.init.zeros_(m.bias_ih_l0)
-            torch.nn.init.zeros_(m.bias_hh_l0)
-            torch.nn.init.orthogonal_(m.weight_ih_l0)
-            torch.nn.init.orthogonal_(m.weight_hh_l0)
-
-
 class Actor(nn.Module):
     def __init__(
             self,
@@ -43,7 +31,6 @@ class Actor(nn.Module):
             self.dist = Continuous(self.hidden_size, action_dim)
         else:
             self.dist = Discrete(self.hidden_size, action_dim)
-        init_weights(self)
         self.device = device
         self.to(self.device)
 
@@ -74,7 +61,7 @@ class Critic(nn.Module):
         if self.rnn:
             self.f2 = Rnn(self.hidden_size, activation)
         self.value = Deterministic(self.hidden_size, 1)
-        init_weights(self)
+
         self.device = device
         self.to(self.device)
 

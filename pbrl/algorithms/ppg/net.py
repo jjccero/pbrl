@@ -1,8 +1,8 @@
 from typing import Optional, List
 
 import torch
+
 from pbrl.policy.base import Deterministic, Cnn, Rnn, Continuous, Discrete, Mlp
-from pbrl.policy.net import init_weights
 
 
 class AuxActor(torch.nn.Module):
@@ -31,7 +31,6 @@ class AuxActor(torch.nn.Module):
         else:
             self.dist = Discrete(self.hidden_size, action_dim)
         self.value = Deterministic(self.hidden_size, 1)
-        init_weights(self)
         self.device = device
         self.to(self.device)
 

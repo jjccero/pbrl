@@ -3,6 +3,18 @@ import torch.nn as nn
 from torch.distributions import Normal, Categorical
 
 
+def init_weights(module: nn.Module, gain=1.414):
+    for m in module.modules():
+        if isinstance(m, (nn.Linear, nn.Conv2d)):
+            torch.nn.init.zeros_(m.bias)
+            torch.nn.init.orthogonal_(m.weight, gain)
+        if isinstance(m, (nn.GRU, nn.LSTM)):
+            torch.nn.init.zeros_(m.bias_ih_l0)
+            torch.nn.init.zeros_(m.bias_hh_l0)
+            torch.nn.init.orthogonal_(m.weight_ih_l0)
+            torch.nn.init.orthogonal_(m.weight_hh_l0)
+
+
 class Mlp(nn.Module):
     def __init__(self, input_dim, hidden_sizes, activation):
         super(Mlp, self).__init__()
@@ -14,6 +26,7 @@ class Mlp(nn.Module):
             mlp.append(activation())
             last_size = hidden_size
         self.mlps = nn.Sequential(*mlp)
+        init_weights(self)
 
     def forward(self, x):
         if self.flat:
@@ -34,6 +47,7 @@ class Cnn(nn.Module):
         w = ((w - 4) // 2 - 4) // 2
         self.mlp = nn.Linear(h * w * 16, hidden_size)
         self.activation = activation()
+        init_weights(self)
 
     def forward(self, x):
         x = x.transpose(-1, -3)
@@ -62,10 +76,7 @@ class Rnn(nn.Module):
         else:
             raise NotImplementedError
         self.activation = activation()
-        torch.nn.init.zeros_(self.rnn.bias_ih_l0)
-        torch.nn.init.zeros_(self.rnn.bias_hh_l0)
-        torch.nn.init.orthogonal_(self.rnn.weight_ih_l0)
-        torch.nn.init.orthogonal_(self.rnn.weight_hh_l0)
+        init_weights(self)
 
     def forward(self, x, states, dones):
         if len(x.shape) == 3:
@@ -101,6 +112,7 @@ class Discrete(nn.Module):
     def __init__(self, hidden_size, action_dim):
         super(Discrete, self).__init__()
         self.logits = nn.Linear(hidden_size, action_dim)
+        init_weights(self, 0.01)
 
     def forward(self, x):
         logits = self.logits(x)
@@ -112,8 +124,7 @@ class Continuous(nn.Module):
         super(Continuous, self).__init__()
         self.mean = nn.Linear(hidden_size, action_dim)
         self.logstd = nn.Parameter(torch.zeros(action_dim))
-        self.mean.weight.data.copy_(0.01 * self.mean.weight.data)
-        torch.nn.init.zeros_(self.mean.bias)
+        init_weights(self, 0.01)
         torch.nn.init.constant_(self.logstd, -0.5)
 
     def forward(self, x):
@@ -126,6 +137,7 @@ class Deterministic(nn.Module):
     def __init__(self, hidden_size, output_dim):
         super(Deterministic, self).__init__()
         self.x = nn.Linear(hidden_size, output_dim)
+        init_weights(self, 1)
 
     def forward(self, x):
         return self.x(x)
