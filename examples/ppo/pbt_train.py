@@ -5,7 +5,6 @@ from multiprocessing.connection import Connection
 import gym
 import numpy as np
 import torch
-
 from pbrl.algorithms.ppo import PPO, Runner, Policy
 from pbrl.common import Logger, update_dict
 from pbrl.env import DummyVecEnv
@@ -20,7 +19,8 @@ def worker_fn(
         seed,
         env_num,
         env_num_test,
-        ready_timestep,
+        timestep: int,
+        ready_timestep: int,
         log_interval,
         buffer_size,
         episode_num_test,
@@ -56,7 +56,7 @@ def worker_fn(
     runner_train = Runner(env_train)
     runner_test = Runner(env_test)
     info = dict()
-    while True:
+    while trainer.timestep < timestep:
         trainer.learn(
             timestep=ready_timestep,
             runner_train=runner_train,
@@ -100,8 +100,8 @@ def worker_fn(
                 policy.rms_reward.load(x['rms_reward'])
         # log
         logger.log(trainer.timestep, info)
-        # save
-        trainer.save(filename_policy)
+    # save
+    trainer.save(filename_policy)
 
 
 def main():
@@ -116,6 +116,7 @@ def main():
     parser.add_argument('--env_num_test', type=int, default=2)
     parser.add_argument('--episode_num_test', type=int, default=10)
     parser.add_argument('--ready_timestep', type=int, default=204800)
+    parser.add_argument('--timestep', type=int, default=3000000)
 
     args = parser.parse_args()
     policy_config = dict(

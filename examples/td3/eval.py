@@ -39,10 +39,10 @@ def main():
     # load policy from disk
     TD3.load(args.filename, policy)
     # define test runner
-    runner_test = Runner(env_test, policy, render=args.render)
+    runner_test = Runner(env=env_test, render=args.render)
+    runner_test.reset()
     while True:
         try:
-            runner_test.reset()
             test_info = runner_test.run(policy, episode_num=args.episode_num_test)
             print(test_info)
         except KeyboardInterrupt:

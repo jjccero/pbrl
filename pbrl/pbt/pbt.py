@@ -4,7 +4,6 @@ from multiprocessing.connection import Connection
 from typing import List, Callable
 
 import numpy as np
-
 from pbrl.pbt.data import Data
 
 
@@ -104,10 +103,11 @@ class PBT:
                     self.explore()
                 # send new data to workers
                 self.send()
-        except KeyboardInterrupt:
+        except:
             self.close()
 
     def close(self):
+        print('close')
         self.closed = True
         for p in self.ps:
             p.join()
