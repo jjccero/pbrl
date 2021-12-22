@@ -118,7 +118,6 @@ def worker_fn(
     policy_opponent = Policy(
         observation_space=env_train.observation_space,
         action_space=env_train.action_space,
-        critic=False,
         **config_policy
     )
     policies = [policy, policy_opponent]

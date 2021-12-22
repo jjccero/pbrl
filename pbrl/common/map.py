@@ -3,4 +3,4 @@ def treemap(f, d: dict):
 
 
 def listmap(f, l: list):
-    return [listmap(f, e) if isinstance(e, list) else e for e in l]
+    return [listmap(f, e) if isinstance(e, list) else f(e) for e in l]

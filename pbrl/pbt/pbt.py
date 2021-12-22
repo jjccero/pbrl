@@ -4,6 +4,7 @@ from multiprocessing.connection import Connection
 from typing import List, Callable
 
 import numpy as np
+
 from pbrl.pbt.data import Data
 
 
@@ -51,6 +52,7 @@ class PBT:
             data.iteration = iteration
             data.score = score
             data.x = x
+            data.y.clear()
 
     def select(self):
         sorted_data = sorted(self.datas, reverse=True)
@@ -65,17 +67,18 @@ class PBT:
                 data_parent = self.datas[parent_worker_id]
                 data = self.datas[worker_id]
                 self.exploits[worker_id] = True
-                data.x = data_parent.x.copy()
+                for k, v in data_parent.x.items():
+                    data.y[k] = v
                 logging.info('{}->{}'.format(worker_id, parent_worker_id))
 
     def explore(self):
         for worker_id in range(self.worker_num):
             if self.exploits[worker_id]:
-                x = self.datas[worker_id].x
+                y = self.datas[worker_id].y
                 if self.rs.random() > 0.5:
-                    x['lr'] = x['lr'] * 1.2
+                    y['lr'] = y['lr'] * 1.2
                 else:
-                    x['lr'] = x['lr'] * 0.8
+                    y['lr'] = y['lr'] * 0.8
 
     def seed(self, seed):
         self.rs.seed(seed)
@@ -83,10 +86,10 @@ class PBT:
     def send(self):
         for worker_id in range(self.worker_num):
             exploit = self.exploits[worker_id]
-            x = self.datas[worker_id].x
+            y = self.datas[worker_id].y
             score = self.datas[worker_id].score
             self.remotes[worker_id].send(
-                (exploit, score, x if exploit else None)
+                (exploit, score, y)
             )
 
     def run(self):

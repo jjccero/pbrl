@@ -10,6 +10,7 @@ class Data:
         self.iteration: Optional[int] = None
         self.score: float = 0.0
         self.x: Optional[Dict] = None
+        self.y: Optional[Dict] = {}
         self.policy = None
 
     def __lt__(self, other):
