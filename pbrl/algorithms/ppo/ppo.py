@@ -25,7 +25,8 @@ class PPO(Trainer):
             entropy_coef: float = 0.0,
             vf_coef: float = 1.0,
             adv_norm: bool = True,
-            recompute_adv: bool = False
+            recompute_adv: bool = False,
+            optimizer=torch.optim.Adam
     ):
         super(PPO, self).__init__()
         self.policy = policy
@@ -44,7 +45,7 @@ class PPO(Trainer):
         self.grad_norm = grad_norm
         self.lr = lr
         self.weight_decay = weight_decay
-        self.optimizer = torch.optim.Adam(
+        self.optimizer = optimizer(
             (
                 {'params': self.policy.actor.parameters()},
                 {'params': self.policy.critic.parameters()}

@@ -5,10 +5,18 @@ from multiprocessing.connection import Connection
 import gym
 import numpy as np
 import torch
-from pbrl.algorithms.ppo import PPO, Runner, Policy
+from pbrl.algorithms.ppg import AuxActor, PPG
+from pbrl.algorithms.ppo import Runner, Policy
 from pbrl.common import Logger, update_dict
+from pbrl.common.map import treemap
 from pbrl.env import DummyVecEnv
 from pbrl.pbt import PBT
+
+
+def map_cpu(e):
+    if isinstance(e, torch.Tensor):
+        return e.cpu()
+    return e
 
 
 def worker_fn(
@@ -47,15 +55,20 @@ def worker_fn(
         **policy_config
     )
     # define trainer for the task
-    trainer = PPO(
+    trainer = PPG(
         policy,
         **trainer_config
     )
-    PPO.load(filename_policy, policy, trainer)
     # define train and test runner
     runner_train = Runner(env_train)
     runner_test = Runner(env_test)
     info = dict()
+    # evaluate
+    runner_test.reset()
+    eval_info = runner_test.run(policy=policy, episode_num=episode_num_test)
+    update_dict(info, eval_info, 'test/')
+    logger.log(trainer.timestep, info)
+
     while trainer.timestep < timestep:
         trainer.learn(
             timestep=ready_timestep,
@@ -68,8 +81,10 @@ def worker_fn(
         update_dict(info, hyperparameter, 'hyperparameter/')
 
         x = dict(
-            actor={k: v.cpu() for k, v in policy.actor.state_dict().items()},
-            critic={k: v.cpu() for k, v in policy.critic.state_dict().items()},
+            actor=treemap(map_cpu, policy.actor.state_dict()),
+            critic=treemap(map_cpu, policy.critic.state_dict()),
+            optimizer=treemap(map_cpu, trainer.optimizer.state_dict()),
+            optimizer_aux=treemap(map_cpu, trainer.optimizer_aux.state_dict()),
             lr=trainer.lr,
             rms_obs=policy.rms_obs,
             rms_reward=policy.rms_reward
@@ -81,23 +96,16 @@ def worker_fn(
         score = np.mean(eval_info['reward'])
         remote.send((trainer.iteration, score, x))
 
-        exploit, _, x = remote.recv()
+        exploit, _, y = remote.recv()
         if exploit is not None:
-            policy.actor.load_state_dict(x['actor'])
-            policy.critic.load_state_dict(x['critic'])
-            trainer.lr = x['lr']
-            trainer.optimizer = torch.optim.Adam(
-                (
-                    {'params': policy.actor.parameters()},
-                    {'params': policy.critic.parameters()}
-                ),
-                lr=trainer.lr,
-                weight_decay=trainer.weight_decay,
-            )
+            policy.actor.load_state_dict(y['actor'])
+            policy.critic.load_state_dict(y['critic'])
+            trainer.optimizer.load_state_dict(y['optimizer'])
+            trainer.optimizer_aux.load_state_dict(y['optimizer_aux'])
             if policy.obs_norm:
-                policy.rms_obs.load(x['rms_obs'])
+                policy.rms_obs.load(y['rms_obs'])
             if policy.reward_norm:
-                policy.rms_reward.load(x['rms_reward'])
+                policy.rms_reward.load(y['rms_reward'])
         # log
         logger.log(trainer.timestep, info)
     # save
@@ -116,7 +124,7 @@ def main():
     parser.add_argument('--env_num_test', type=int, default=2)
     parser.add_argument('--episode_num_test', type=int, default=10)
     parser.add_argument('--ready_timestep', type=int, default=204800)
-    parser.add_argument('--timestep', type=int, default=3000000)
+    parser.add_argument('--timestep', type=int, default=3072000)
 
     args = parser.parse_args()
     policy_config = dict(
@@ -126,7 +134,8 @@ def main():
         obs_norm=True,
         reward_norm=True,
         gamma=0.99,
-        device=torch.device('cuda:0')
+        device=torch.device('cuda:0'),
+        actor_type=AuxActor
     )
     trainer_config = dict(
         batch_size=64,
@@ -134,11 +143,13 @@ def main():
         eps=0.2,
         gamma=policy_config['gamma'],
         gae_lambda=0.95,
-        repeat=10,
         lr=3e-4,
-        entropy_coef=0.0,
-        adv_norm=False,
-        recompute_adv=True
+        lr_aux=3e-4,
+        beta_clone=1.0,
+        epoch_aux=6,
+        epoch_pi=4,
+        epoch_vf=4,
+        n_pi=10
     )
     pbt = PBT(
         worker_fn=worker_fn,

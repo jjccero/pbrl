@@ -20,6 +20,8 @@ class PPG(PPO):
             lr: float = 5e-4,
             grad_norm: float = 0.5,
             entropy_coef: float = 0.0,
+            optimizer=torch.optim.Adam,
+            optimizer_aux=torch.optim.Adam,
             aux_batch_size: int = 256,
             n_pi: int = 32,
             epoch_pi: int = 1,
@@ -41,7 +43,8 @@ class PPG(PPO):
             grad_norm=grad_norm,
             entropy_coef=entropy_coef,
             adv_norm=True,
-            recompute_adv=False
+            recompute_adv=False,
+            optimizer=optimizer
         )
         self.aux_batch_size = aux_batch_size
         self.n_pi = n_pi
@@ -50,7 +53,7 @@ class PPG(PPO):
         self.epoch_aux = epoch_aux
         self.beta_clone = beta_clone
         self.lr_aux = lr_aux
-        self.optimizer_aux = torch.optim.Adam(
+        self.optimizer_aux = optimizer_aux(
             (
                 {'params': self.policy.actor.parameters()},
                 {'params': self.policy.critic.parameters()}

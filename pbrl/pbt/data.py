@@ -7,8 +7,10 @@ class Data:
             worker_id: int
     ):
         self.worker_id = worker_id
-        self.iteration: Optional[int] = None
         self.score: float = 0.0
+        self.order = None
+        self.exploit: Optional[int] = None
+        self.iteration: Optional[int] = None
         self.x: Optional[Dict] = None
         self.y: Optional[Dict] = {}
         self.policy = None

@@ -2,6 +2,7 @@ import os
 from typing import Optional
 
 import torch
+
 from pbrl.algorithms.td3.buffer import ReplayBuffer
 from pbrl.algorithms.td3.policy import Policy
 from pbrl.algorithms.trainer import Trainer
@@ -21,7 +22,8 @@ class TD3(Trainer):
             tau: float = 0.005,
             lr_actor: float = 3e-4,
             lr_critic: float = 3e-4,
-            reward_scaling: Optional[float] = None
+            reward_scaling: Optional[float] = None,
+            optimizer=torch.optim.Adam
     ):
         super(TD3, self).__init__()
         self.policy = policy
@@ -39,11 +41,11 @@ class TD3(Trainer):
         self.tau = tau
         self.lr_actor = lr_actor
         self.lr_critic = lr_critic
-        self.optimizer_actor = torch.optim.Adam(
+        self.optimizer_actor = optimizer(
             self.policy.actor.parameters(),
             lr=self.lr_actor
         )
-        self.optimizer_critic = torch.optim.Adam(
+        self.optimizer_critic = optimizer(
             self.policy.critic.parameters(),
             lr=self.lr_critic
         )

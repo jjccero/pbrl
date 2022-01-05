@@ -4,7 +4,6 @@ from multiprocessing.connection import Connection
 from typing import List, Callable
 
 import numpy as np
-
 from pbrl.pbt.data import Data
 
 
@@ -41,7 +40,6 @@ class PBT:
             self.ps.append(p)
             self.datas.append(Data(worker_id))
             remote_worker.close()
-        self.exploits = [False] * self.worker_num
         self.exploit = exploit
         self.rs = np.random.RandomState()
         self.state = dict()
@@ -55,25 +53,26 @@ class PBT:
             data.y.clear()
 
     def select(self):
-        sorted_data = sorted(self.datas, reverse=True)
+        sorted_datas = sorted(self.datas, reverse=True)
         top_index = round(self.worker_num * 0.2)
         for i in range(self.worker_num):
-            worker_id = sorted_data[i].worker_id
-            self.exploits[worker_id] = False
+            worker_id = sorted_datas[i].worker_id
+            data = self.datas[worker_id]
+            data.order = i
+            data.exploit = None
             # condition 1: bottom 20%
             if i + top_index >= self.worker_num:
                 # top 20%
-                parent_worker_id = sorted_data[self.rs.choice(top_index)].worker_id
+                parent_worker_id = sorted_datas[self.rs.choice(top_index)].worker_id
                 data_parent = self.datas[parent_worker_id]
-                data = self.datas[worker_id]
-                self.exploits[worker_id] = True
+                data.exploit = parent_worker_id
                 for k, v in data_parent.x.items():
                     data.y[k] = v
                 logging.info('{}->{}'.format(worker_id, parent_worker_id))
 
     def explore(self):
         for worker_id in range(self.worker_num):
-            if self.exploits[worker_id]:
+            if self.datas[worker_id].exploit is not None:
                 y = self.datas[worker_id].y
                 if self.rs.random() > 0.5:
                     y['lr'] = y['lr'] * 1.2
@@ -85,7 +84,7 @@ class PBT:
 
     def send(self):
         for worker_id in range(self.worker_num):
-            exploit = self.exploits[worker_id]
+            exploit = self.datas[worker_id].exploit
             y = self.datas[worker_id].y
             score = self.datas[worker_id].score
             self.remotes[worker_id].send(
@@ -110,7 +109,6 @@ class PBT:
             self.close()
 
     def close(self):
-        print('close')
         self.closed = True
         for p in self.ps:
             p.join()

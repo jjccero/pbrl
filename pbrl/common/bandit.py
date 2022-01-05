@@ -3,13 +3,12 @@ from typing import List
 import numpy as np
 
 
-class Bandits:
+class Bandit:
     def __init__(self, arms=List[float], random_choice=5):
         self.arms = arms
         self.arm_num = len(arms)
         self.alpha = np.ones(self.arm_num, dtype=int)
         self.beta = np.ones(self.arm_num, dtype=int)
-        self.reward = -np.inf
         self.arm = 0
         self.choices = 0
         self.random_choice = random_choice
@@ -20,11 +19,10 @@ class Bandits:
 
     def update(self, reward):
         self.choices += 1
-        if reward > self.reward:
+        if reward:
             self.alpha[self.arm] += 1
         else:
             self.beta[self.arm] += 1
-        self.reward = reward
 
     def sample(self):
         if self.choices > self.random_choice:
