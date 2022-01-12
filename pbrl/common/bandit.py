@@ -30,3 +30,8 @@ class Bandit:
         else:
             self.arm = np.random.choice(self.arm_num)
         return self.value
+
+    def clear(self):
+        self.alpha[:] = 1
+        self.beta[:] = 1
+        self.choices = 1

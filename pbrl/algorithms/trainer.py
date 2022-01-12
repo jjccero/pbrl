@@ -1,6 +1,7 @@
 from typing import Optional
 
 import torch
+
 from pbrl.algorithms.runner import BaseRunner
 from pbrl.common.logger import update_dict, Logger
 from pbrl.policy.policy import BasePolicy
@@ -70,3 +71,4 @@ class Trainer:
                 logger.log(self.timestep, info)
             if done:
                 break
+        return info
