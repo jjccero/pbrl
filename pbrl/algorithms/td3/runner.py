@@ -1,24 +1,12 @@
 import time
 from typing import Optional
 
-import numpy as np
+from pbrl.algorithms.runner import BaseRunner
 from pbrl.algorithms.td3.buffer import ReplayBuffer
 from pbrl.algorithms.td3.policy import Policy
-from pbrl.algorithms.runner import BaseRunner
-from pbrl.env.env import VectorEnv
 
 
 class Runner(BaseRunner):
-    def __init__(
-            self,
-            env: VectorEnv,
-            max_episode_steps=np.inf,
-            render: Optional[float] = None
-    ):
-        super(Runner, self).__init__(env, render)
-        self.max_episode_steps = max_episode_steps
-        self.episode_steps = np.zeros(self.env_num, dtype=int)
-
     def run(self, policy: Policy, buffer: Optional[ReplayBuffer] = None, timestep_num=0, episode_num=0, random=False):
         timestep = 0
         episode = 0

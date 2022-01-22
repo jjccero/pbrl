@@ -1,4 +1,4 @@
-for seed in 100 200 300
+for seed in 0 100 200 300 400
 do
     for env in 'Ant-v3' 'Hopper-v3' 'Walker2d-v3' 'HalfCheetah-v3' 'Swimmer-v3' 'Humanoid-v3'
     do

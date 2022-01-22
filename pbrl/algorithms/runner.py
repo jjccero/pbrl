@@ -3,12 +3,16 @@ from abc import abstractmethod
 from typing import Optional
 
 import numpy as np
-
 from pbrl.env.env import VectorEnv
 
 
 class BaseRunner:
-    def __init__(self, env: VectorEnv, render: Optional[float] = None):
+    def __init__(
+            self,
+            env: VectorEnv,
+            max_episode_steps=np.inf,
+            render: Optional[float] = None
+    ):
         self.env = env
         self.env_num = env.env_num
 
@@ -17,6 +21,9 @@ class BaseRunner:
         self.episode_rewards = np.zeros(self.env_num)
         self.returns = np.zeros(self.env_num)
         self.render = render
+
+        self.max_episode_steps = max_episode_steps
+        self.episode_steps = np.zeros(self.env_num, dtype=int)
 
     def reset(self):
         self.observations = self.env.reset()
