@@ -29,7 +29,7 @@ class PGBuffer:
         self.rewards.append(rewards)
         self.dones.append(dones)
 
-    def generator(self, batch_size: int, chunk_len: int, ks):
+    def generator(self, batch_size: int, chunk_len: int, ks, shuffle=True):
         env_num = self.observations_next.shape[0]
         step_num = len(self.rewards)
         data = {
@@ -47,8 +47,7 @@ class PGBuffer:
             buffer_size = chunk_size * env_num
             batch_size = batch_size // chunk_len
 
-            # process RNN chunk
-            def to_rnn_chunk(arr):
+            def to_chunk(arr):
                 # arr's shape is (step_num, env_num, ...)
                 # because chunk_size * chunk_len = step_num
                 # reshape to (env_num, chunk_size * chunk_len, ...)
@@ -60,13 +59,14 @@ class PGBuffer:
                 arr = np.concatenate(arr)
                 return arr
 
-            batch = {k: to_rnn_chunk(data[k]) for k in ks}
+            batch = {k: to_chunk(data[k]) for k in ks}
         else:
             buffer_size = step_num * env_num
             batch = {key: np.concatenate(data[key]) for key in ks}
 
         indices = np.arange(buffer_size)
-        np.random.shuffle(indices)
+        if shuffle:
+            np.random.shuffle(indices)
         start = 0
         while start < buffer_size:
             if start + 2 * batch_size <= buffer_size:

@@ -60,7 +60,7 @@ Then you can access the training information by visiting http://localhost:6006/ 
         * [ppg/](/pbrl/algorithms/ppg) Phasic Policy Gradient
         * [ppo/](/pbrl/algorithms/ppo) Proximal Policy Optimization
         * [td3/](/pbrl/algorithms/td3) Twin Delayed Deep Deterministic Policy Gradient
-    * [competitive/](/pbrl/competitive) Multi-agent support
+    * [competitive/](/pbrl/competitive) Multi-agent support (Future)
     * [env/](/pbrl/env)
         * [env.py](/pbrl/env/env.py) wrapped vector environment
         * [test.py](/pbrl/env/test.py) test
@@ -78,45 +78,14 @@ Then you can access the training information by visiting http://localhost:6006/ 
 * Generalized Advantage Estimation (GAE)
 * Observation Normalization and Reward Scaling (RunningMeanStd)
 
+### TD3's Tricks
+
+* Infinite MDPs (without time limit)
+
 ### Population Based Training (PBT)
 
 * **_select()_** Ranked by mean episodic rewards. Agents in the bottom 20% copy the top 20%.
 * **_explore()_** Each hyperparameter is randomly perturbed by a factor of 1.2 or 0.8.
-
-### Multi-agent Game
-
-#### gym_compete
-
-Modify setup.py in [gym_compete](https://github.com/openai/multiagent-competition):
-
-```python
-from setuptools import setup, find_packages
-
-setup(
-    name='gym_compete',
-    version='0.0.1',
-    install_requires=['gym'],
-    packages=find_packages(),
-)
-```
-
-`pip install gym==0.9.1 mujoco_py==0.5.7`
-
-#### Example
-
-Before you customize your own multi-agent games, extends the base class **_CompetitiveEnv_** and implement two methods:
-
-* **_init()_** What roles the agents play (the rules can be changed by following method). This method will be called
-  after initialization.
-* **_before_reset()_** Whether to reload weights and change opponents when training. This method will be called before
-  each **_env.reset()_** with a built-in counter **_times_reset_**.
-* **_after_done()_** This method will be called after each episode is done.
-
-```
-cd examples/ppo
-python train_competitive.py
-python eval_competitive.py
-```
 
 ## Custom Tasks
 

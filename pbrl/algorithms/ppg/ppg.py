@@ -169,13 +169,13 @@ class PPG(PPO):
     def update(self):
         loss_info = dict(value=[], policy=[], entropy=[])
 
+        # it is PPO
         self.policy.critic.eval()
         self.gae()
         self.policy.actor.train()
         self.policy.critic.train()
         if self.epoch_pi == self.epoch_vf:
             for i in range(self.epoch_pi):
-                # it is PPO
                 self.train_pi_vf(loss_info)
         else:
             for i in range(self.epoch_vf):
@@ -183,20 +183,23 @@ class PPG(PPO):
             for i in range(self.epoch_pi):
                 self.train_pi(loss_info)
         self.policy.actor.eval()
-        self.aux_buffer.append(
-            observations=self.buffer.observations,
-            dones=self.buffer.dones,
-            vtargs=self.buffer.returns
-        )
 
-        if (self.iteration + 1) % self.n_pi == 0:
-            loss_info.update(dict(kl=[], aux_pi=[], aux_vf=[]))
-            self.compute_dists_old()
-            self.policy.actor.train()
-            for i in range(self.epoch_aux):
-                self.auxiliary_phase(loss_info)
-            self.policy.actor.eval()
-            self.aux_buffer.clear()
+        # auxiliary phase
+        if self.n_pi > 0 and self.epoch_aux > 0:
+            self.aux_buffer.append(
+                observations=self.buffer.observations,
+                dones=self.buffer.dones,
+                vtargs=self.buffer.returns
+            )
 
+            if (self.iteration + 1) % self.n_pi == 0:
+                loss_info.update(dict(kl=[], aux_pi=[], aux_vf=[]))
+                self.compute_dists_old()
+                self.policy.actor.train()
+                for i in range(self.epoch_aux):
+                    self.auxiliary_phase(loss_info)
+                self.policy.actor.eval()
+                self.aux_buffer.clear()
+        # on-policy
         self.buffer.clear()
         return loss_info

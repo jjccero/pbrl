@@ -155,8 +155,8 @@ class PPO(Trainer):
 
     def update(self):
         loss_info = dict(value=[], policy=[], entropy=[])
-        self.policy.actor.train()
 
+        self.policy.actor.train()
         for i in range(self.repeat):
             if i == 0 or self.recompute_adv:
                 self.policy.critic.eval()
