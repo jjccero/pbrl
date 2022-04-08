@@ -1,5 +1,5 @@
 import numpy as np
-from gym.spaces import Space
+from gym.spaces import Space, Box, Discrete
 
 
 class ReplayBuffer:
@@ -12,9 +12,13 @@ class ReplayBuffer:
         self.buffer_size = buffer_size
         self.ptr = 0
         self.len = 0
-
         self.observations = np.zeros((buffer_size, *observation_space.shape), dtype=float)
-        self.actions = np.zeros((buffer_size, *action_space.shape), dtype=float)
+        if isinstance(action_space, Box):
+            self.actions = np.zeros((buffer_size, *action_space.shape), dtype=float)
+        elif isinstance(action_space, Discrete):
+            self.actions = np.zeros(buffer_size, dtype=int)
+        else:
+            raise NotImplementedError
         self.observations_next = np.zeros((buffer_size, *observation_space.shape), dtype=float)
         self.rewards = np.zeros(buffer_size)
         self.dones = np.zeros(buffer_size, dtype=float)

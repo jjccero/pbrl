@@ -57,6 +57,7 @@ Then you can access the training information by visiting http://localhost:6006/ 
 * [examples/](/examples)
 * [pbrl/](/pbrl)
     * [algorithms/](/pbrl/algorithms)
+        * [dqn/](/pbrl/algorithms/dqn) Deep Q Network
         * [ppg/](/pbrl/algorithms/ppg) Phasic Policy Gradient
         * [ppo/](/pbrl/algorithms/ppo) Proximal Policy Optimization
         * [td3/](/pbrl/algorithms/td3) Twin Delayed Deep Deterministic Policy Gradient

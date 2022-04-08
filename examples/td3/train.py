@@ -89,7 +89,12 @@ def main():
     )
 
     # define train and test runner
-    runner_train = Runner(env_train, max_episode_steps=gym.make(args.env).spec.max_episode_steps)
+    runner_train = Runner(
+        env=env_train,
+        max_episode_steps=gym.make(args.env).spec.max_episode_steps,
+        start_timestep=args.start_timestep,
+        fill=True
+    )
     runner_test = Runner(env_test)
 
     trainer.learn(
@@ -100,8 +105,7 @@ def main():
         log_interval=args.log_interval,
         runner_test=runner_test,
         test_interval=args.test_interval,
-        episode_test=args.episode_num_test,
-        start_timestep=args.start_timestep
+        episode_test=args.episode_num_test
     )
     trainer.save(filename_policy)
     print(filename_policy)

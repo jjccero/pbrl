@@ -63,14 +63,16 @@ class BasePolicy:
     def step(
             self,
             observations: np.ndarray,
-            states_actor
+            states_actor,
+            **kwargs
     ):
         raise NotImplementedError
 
     def act(
             self,
             observations: np.ndarray,
-            states_actor
+            states_actor,
+            **kwargs
     ) -> Tuple[np.ndarray, Any]:
         raise NotImplementedError
 

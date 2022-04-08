@@ -1,24 +1,53 @@
 import time
 from typing import Optional
 
+import numpy as np
 from pbrl.algorithms.runner import BaseRunner
 from pbrl.algorithms.td3.buffer import ReplayBuffer
-from pbrl.algorithms.td3.policy import Policy
+from pbrl.env.env import VectorEnv
+from pbrl.policy.policy import BasePolicy
 
 
 class Runner(BaseRunner):
-    def run(self, policy: Policy, buffer: Optional[ReplayBuffer] = None, timestep_num=0, episode_num=0, random=False):
+    def __init__(
+            self,
+            env: VectorEnv,
+            max_episode_steps=np.inf,
+            render: Optional[float] = None,
+            start_timestep=0,
+            fill=False,
+            epsilon: Optional[float] = None
+    ):
+        super(Runner, self).__init__(
+            env=env,
+            max_episode_steps=max_episode_steps,
+            render=render
+        )
+        self.start_timestep = start_timestep
+        self.fill = fill
+        self.epsilon = epsilon
+
+    def run(self, policy: BasePolicy, buffer: Optional[ReplayBuffer] = None, timestep_num=0, episode_num=0):
         timestep = 0
         episode = 0
         episode_rewards = []
         episode_infos = []
 
         update = buffer is not None
+        random = False
+        # TD3
+        if self.fill and update:
+            self.fill = False
+            timestep_num += self.start_timestep
+            random = True
 
         while True:
             observations = self.observations
             if update:
-                actions, self.states_actor = policy.step(observations, self.states_actor, random)
+                if self.epsilon is not None:
+                    # DQN
+                    random = np.random.random() < self.epsilon
+                actions, self.states_actor = policy.step(observations, self.states_actor, random=random)
             else:
                 actions, self.states_actor = policy.act(observations, self.states_actor)
             self.observations, rewards, dones, infos = self.env.step(policy.wrap_actions(actions))

@@ -32,8 +32,7 @@ class Trainer:
             log_interval=0,
             runner_test: Optional[BaseRunner] = None,
             test_interval=0,
-            episode_test=0,
-            start_timestep=0
+            episode_test=0
     ):
         timestep += self.timestep
         info = dict()
@@ -45,11 +44,6 @@ class Trainer:
             test_info = runner_test.run(policy=self.policy, episode_num=episode_test)
             update_dict(info, test_info, 'test/')
             logger.log(self.timestep, info)
-            if start_timestep:
-                train_info = runner_train.run(
-                    policy=self.policy, buffer=self.buffer, timestep_num=start_timestep, random=True
-                )
-                self.timestep += train_info['timestep']
 
         while True:
             train_info = runner_train.run(policy=self.policy, buffer=self.buffer, timestep_num=timestep_update)
