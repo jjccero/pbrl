@@ -11,7 +11,7 @@ from pbrl.env import DummyVecEnv
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument('--env', type=str, default='Humanoid-v3')
+    parser.add_argument('--env', type=str, default='HalfCheetah-v3')
     parser.add_argument('--env_num', type=int, default=1)
     parser.add_argument('--env_num_test', type=int, default=2)
     parser.add_argument('--episode_num_test', type=int, default=10)

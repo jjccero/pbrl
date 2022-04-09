@@ -3,6 +3,7 @@ from typing import Callable, Optional, Tuple, Any, List, Type
 import numpy as np
 import torch
 from gym.spaces import Box, Discrete, Space
+
 from pbrl.common.rms import RunningMeanStd
 from pbrl.policy.wrapper import TanhWrapper, ClipWrapper
 
@@ -83,6 +84,8 @@ class BasePolicy:
     def n2t(self, n: np.ndarray) -> torch.Tensor:
         if n.dtype == np.float64:
             n = n.astype(np.float32)
+        elif n.dtype == np.int32:
+            n = n.astype(np.int64)
         return torch.from_numpy(n).to(self.device)
 
     def normalize_observations(self, observations: np.ndarray, update=False):

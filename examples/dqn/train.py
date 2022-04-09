@@ -29,7 +29,7 @@ def main():
     parser.add_argument('--target_freq', type=int, default=10)
     parser.add_argument('--epsilon', type=float, default=0.2)
     parser.add_argument('--gamma', type=float, default=0.9)
-
+    parser.add_argument('--start_timestep', type=int, default=10000)
     parser.add_argument('--lr_critic', type=float, default=3e-4)
 
     args = parser.parse_args()
@@ -68,7 +68,7 @@ def main():
     # define train and test runner
     runner_train = Runner(
         env=env_train,
-        start_timestep=10000,
+        start_timestep=args.start_timestep,
         fill=True,
         epsilon=args.epsilon
     )
