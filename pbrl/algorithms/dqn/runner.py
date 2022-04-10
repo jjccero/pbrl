@@ -3,7 +3,7 @@ from typing import Optional
 
 import numpy as np
 from pbrl.algorithms.runner import BaseRunner
-from pbrl.algorithms.td3.buffer import ReplayBuffer
+from pbrl.algorithms.dqn.buffer import ReplayBuffer
 from pbrl.env.env import VectorEnv
 from pbrl.policy.policy import BasePolicy
 

@@ -2,7 +2,9 @@ import argparse
 
 import gym
 import torch
-from pbrl.algorithms.td3 import TD3, Policy, Runner
+
+from pbrl.algorithms.dqn import Runner
+from pbrl.algorithms.td3 import TD3, Policy
 from pbrl.env import DummyVecEnv
 
 

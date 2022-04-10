@@ -4,7 +4,9 @@ import time
 import gym
 import numpy as np
 import torch
-from pbrl.algorithms.td3 import TD3, Runner, Policy
+
+from pbrl.algorithms.dqn import Runner
+from pbrl.algorithms.td3 import TD3, Policy
 from pbrl.common import Logger
 from pbrl.env import DummyVecEnv
 

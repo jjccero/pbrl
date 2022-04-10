@@ -3,7 +3,7 @@ from typing import Optional
 
 import torch
 
-from pbrl.algorithms.td3.buffer import ReplayBuffer
+from pbrl.algorithms.dqn.buffer import ReplayBuffer
 from pbrl.algorithms.td3.policy import Policy
 from pbrl.algorithms.trainer import Trainer
 

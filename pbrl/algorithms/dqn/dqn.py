@@ -3,7 +3,7 @@ from typing import Optional
 
 import torch
 from pbrl.algorithms.dqn.policy import Policy
-from pbrl.algorithms.td3.buffer import ReplayBuffer
+from pbrl.algorithms.dqn.buffer import ReplayBuffer
 from pbrl.algorithms.trainer import Trainer
 
 
@@ -11,8 +11,8 @@ class DQN(Trainer):
     def __init__(
             self,
             policy: Policy,
-            buffer_size: int = 10000,
-            batch_size: int = 256,
+            buffer_size: int = 20000,
+            batch_size: int = 64,
             gamma: float = 0.99,
             target_freq: int = 10,
             lr_critic: float = 1e-3,

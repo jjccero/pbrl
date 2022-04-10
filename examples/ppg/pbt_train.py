@@ -5,6 +5,7 @@ from multiprocessing.connection import Connection
 import gym
 import numpy as np
 import torch
+
 from pbrl.algorithms.ppg import AuxActor, PPG
 from pbrl.algorithms.ppo import Runner, Policy
 from pbrl.common import Logger, update_dict
@@ -17,6 +18,13 @@ def map_cpu(e):
     if isinstance(e, torch.Tensor):
         return e.cpu()
     return e
+
+
+def test(runner_test, policy, episode_num_test, info):
+    runner_test.reset()
+    eval_info = runner_test.run(policy=policy, episode_num=episode_num_test)
+    update_dict(info, eval_info, 'test/')
+    return np.mean(eval_info['reward'])
 
 
 def worker_fn(
@@ -63,12 +71,8 @@ def worker_fn(
     runner_train = Runner(env_train)
     runner_test = Runner(env_test)
     info = dict()
-    # evaluate
-    runner_test.reset()
-    eval_info = runner_test.run(policy=policy, episode_num=episode_num_test)
-    update_dict(info, eval_info, 'test/')
+    test(runner_test, policy, episode_num_test, info)
     logger.log(trainer.timestep, info)
-
     while trainer.timestep < timestep:
         trainer.learn(
             timestep=ready_timestep,
@@ -90,10 +94,7 @@ def worker_fn(
             rms_reward=policy.rms_reward
         )
         # evaluate
-        runner_test.reset()
-        eval_info = runner_test.run(policy=policy, episode_num=episode_num_test)
-        update_dict(info, eval_info, 'test/')
-        score = np.mean(eval_info['reward'])
+        score = test(runner_test, policy, episode_num_test, info)
         remote.send((trainer.iteration, score, x))
 
         exploit, _, y = remote.recv()
@@ -123,7 +124,7 @@ def main():
     parser.add_argument('--buffer_size', type=int, default=2048)
     parser.add_argument('--env_num_test', type=int, default=2)
     parser.add_argument('--episode_num_test', type=int, default=10)
-    parser.add_argument('--ready_timestep', type=int, default=204800)
+    parser.add_argument('--ready_timestep', type=int, default=102400)
     parser.add_argument('--timestep', type=int, default=3072000)
 
     args = parser.parse_args()

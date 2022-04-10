@@ -13,11 +13,11 @@ setup(
     packages=find_packages(),
     install_requires=[
         'pyglet',
-        'gym',
+        'gym==0.19',
         'numpy>=1.19',
         'cloudpickle',  # fn
         'tensorboard',
         'tensorboardx',
-        'torch'
+        'torch>=1.9'
     ]
 )
