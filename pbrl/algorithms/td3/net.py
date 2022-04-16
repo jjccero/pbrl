@@ -10,7 +10,7 @@ class DeterministicActor(nn.Module):
             self,
             obs_dim: tuple,
             action_dim: int,
-            hidden_sizes: List[int],
+            hidden_sizes: List,
             activation,
             rnn: Optional[str]
     ):

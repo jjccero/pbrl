@@ -25,26 +25,40 @@ class Mlp(nn.Module):
             mlp.append(nn.Linear(last_size, hidden_size))
             mlp.append(activation())
             last_size = hidden_size
-        self.mlps = nn.Sequential(*mlp)
+        self.mlp = nn.Sequential(*mlp)
 
     def forward(self, x):
         if self.flat:
             x = torch.flatten(x, -2)
-        x = self.mlps(x)
+        x = self.mlp(x)
         return x
 
 
 class Cnn(nn.Module):
-    def __init__(self, shape, hidden_size, activation):
+    def __init__(self, shape, hidden_sizes, activation):
         super(Cnn, self).__init__()
-        h, w, c = shape
-        self.conv0 = nn.Conv2d(c, 16, 5)
-        self.pool0 = nn.MaxPool2d(2)
-        self.conv1 = nn.Conv2d(16, 16, 5)
-        self.pool1 = nn.MaxPool2d(2)
-        h = ((h - 4) // 2 - 4) // 2
-        w = ((w - 4) // 2 - 4) // 2
-        self.mlp = nn.Linear(h * w * 16, hidden_size)
+        h, w, in_channels = shape
+        cnn = []
+        mlp_idx = 0
+        for conv in hidden_sizes:
+            if isinstance(conv, tuple):
+                out_channels, kernel_size, pool_size = conv
+                cnn.append(nn.Conv2d(in_channels, out_channels, (kernel_size, kernel_size)))
+                cnn.append(nn.MaxPool2d(pool_size))
+                cnn.append(activation())
+                h = (h - kernel_size + 1) // pool_size
+                w = (w - kernel_size + 1) // pool_size
+                in_channels = out_channels
+            else:
+                break
+            mlp_idx += 1
+
+        self.cnn = nn.Sequential(*cnn)
+        self.mlp = Mlp(
+            (h * w * in_channels,),
+            hidden_sizes[mlp_idx:],
+            activation
+        )
         self.activation = activation()
 
     def forward(self, x):
@@ -52,13 +66,11 @@ class Cnn(nn.Module):
         if len(x.shape) == 5:
             l, b = x.shape[:2]
             x = x.flatten(0, 1)
-            x = self.activation(self.pool0(self.conv0(x)))
-            x = self.activation(self.pool1(self.conv1(x)))
+            x = self.cnn(x)
             x = x.flatten(1)
             x = x.unflatten(0, (l, b))
         else:
-            x = self.activation(self.pool0(self.conv0(x)))
-            x = self.activation(self.pool1(self.conv1(x)))
+            x = self.cnn(x)
             x = x.flatten(1)
         x = self.activation(self.mlp(x))
         return x

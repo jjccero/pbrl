@@ -2,7 +2,8 @@ from typing import List, Optional
 
 import torch
 import torch.nn as nn
-from pbrl.policy.base import Mlp, Deterministic, init_weights
+
+from pbrl.policy.base import Mlp, Cnn, Deterministic, init_weights
 
 
 class QNet(nn.Module):
@@ -10,7 +11,7 @@ class QNet(nn.Module):
             self,
             obs_dim: tuple,
             action_dim: int,
-            hidden_sizes: List[int],
+            hidden_sizes: List,
             activation,
             rnn: Optional[str]
     ):

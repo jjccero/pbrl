@@ -2,6 +2,7 @@ from typing import Optional, List
 
 import torch
 import torch.nn as nn
+
 from pbrl.policy.base import Mlp, Cnn, Rnn, Discrete, Continuous, Deterministic, init_weights
 
 
@@ -10,7 +11,7 @@ class Actor(nn.Module):
             self,
             obs_dim: tuple,
             action_dim: int,
-            hidden_sizes: List[int],
+            hidden_sizes: List,
             activation,
             rnn: Optional[str],
             continuous: bool
@@ -46,7 +47,7 @@ class Critic(nn.Module):
     def __init__(
             self,
             obs_dim: tuple,
-            hidden_sizes: List[int],
+            hidden_sizes: List,
             activation,
             rnn: Optional[str]
     ):

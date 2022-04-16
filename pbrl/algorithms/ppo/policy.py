@@ -3,6 +3,7 @@ from typing import Optional, List, Type
 import numpy as np
 import torch
 from gym.spaces import Box, Discrete, Space
+
 from pbrl.algorithms.ppo.net import Actor, Critic
 from pbrl.policy.policy import BasePolicy
 
@@ -12,7 +13,7 @@ class Policy(BasePolicy):
             self,
             observation_space: Space,
             action_space: Space,
-            hidden_sizes: List[int],
+            hidden_sizes: List,
             activation: Type[torch.nn.Module],
             rnn: Optional[str] = None,
             clip_fn='clip',
