@@ -25,7 +25,7 @@ class CompetitiveEnv:
         self.infos = None
 
         self.times_reset = 0
-        self.rs = np.random.RandomState()
+        self.random_state = np.random.RandomState()
 
         self.indices = []
         self.agents: List[Agent] = []
@@ -80,7 +80,7 @@ class CompetitiveEnv:
         self.env.render(mode)
 
     def seed(self, seed=None):
-        self.rs.seed(seed)
+        self.random_state.seed(seed)
         self.env.seed(seed)
 
     def close(self):

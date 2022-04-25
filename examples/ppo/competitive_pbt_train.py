@@ -30,18 +30,18 @@ class TrainEnv(CompetitiveEnv):
 
     def before_reset(self):
         indices = np.arange(self.role_num)
-        self.rs.shuffle(indices)
+        self.random_state.shuffle(indices)
         self.index = indices[0]
         self.indices = [indices[1:]]
         if self.times_reset % 8 == 0:
             opponent_dir = None
-            if self.rs.random() < 0.3:
+            if self.random_state.random() < 0.3:
                 opponent_filenames = os.listdir(self.state['history_dir'])
                 if len(opponent_filenames) > 0:
-                    opponent_filename = self.rs.choice(opponent_filenames)
+                    opponent_filename = self.random_state.choice(opponent_filenames)
                     opponent_dir = os.path.join(self.state['history_dir'], opponent_filename)
             else:
-                opponent_id = self.rs.choice(self.state['worker_num'])
+                opponent_id = self.random_state.choice(self.state['worker_num'])
                 opponent_dir = os.path.join(self.state['current_dir'], '{}.pkl'.format(opponent_id))
             load_success = False
             while load_success:

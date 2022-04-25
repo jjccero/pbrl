@@ -30,7 +30,7 @@ Train and evaluate CartPole-v0 agent:
 python examples/quick_start.py
 ```
 
-MountainCar-v0 (rl-baselines3-zoo):
+Try replacing CartPole-v0 above with MountainCar-v0 (rl-baselines3-zoo):
 
 ```
 cd examples/ppo
@@ -64,7 +64,7 @@ Then you can access the training information by visiting http://localhost:6006/ 
     * [competitive/](/pbrl/competitive) Multi-agent support (Future)
     * [env/](/pbrl/env)
         * [env.py](/pbrl/env/env.py) wrapped vector environment
-        * [test.py](/pbrl/env/test.py) test
+        * [test.py](/pbrl/env/test/rnn.py) test
     * [pbt/](/pbrl/pbt) Population Based Training
     * [policy/](/pbrl/policy)
         * [base.py](/pbrl/policy/base.py) MLP, CNN and RNN
@@ -90,11 +90,11 @@ Then you can access the training information by visiting http://localhost:6006/ 
 
 ## Custom Tasks
 
-Refer to the [test.py](/pbrl/env/test.py) to customize your own environment.
+Refer to the [rnn.py](/pbrl/env/test/rnn.py) to customize your own environment.
 
 ```
 cd examples/ppo
-python train.py --env Test-v0 --chunk_len 8 --rnn gru --gamma 0.0 --lr 1e-3 --log_interval 1
+python train.py --env RnnTest-v0 --chunk_len 8 --rnn gru --gamma 0.0 --lr 1e-3 --log_interval 1
 ```
 
 * General RL algorithms will achieve an average reward of 55.5.

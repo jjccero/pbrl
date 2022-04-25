@@ -58,7 +58,7 @@ class CompetitivePBT(PBT):
             # condition 1: bottom 20%
             if i + top_index >= self.worker_num:
                 # top 20%
-                parent_worker_id = sorted_data[self.rs.choice(top_index)].worker_id
+                parent_worker_id = sorted_data[self.random_state.choice(top_index)].worker_id
                 data_parent = self.datas[parent_worker_id]
                 data = self.datas[worker_id]
                 # condition 2:

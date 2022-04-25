@@ -2,21 +2,14 @@ from collections import deque
 
 import gym
 import numpy as np
-from gym.envs.registration import register
+
 from gym.spaces import Box, Discrete
 
-register(
-    id='Test-v0',
-    entry_point='pbrl.env.test:TestEnv',
-    max_episode_steps=100,
-    reward_threshold=99.0
-)
 
-
-class TestEnv(gym.Env):
+class RnnTest(gym.Env):
     def __init__(self):
-        super(TestEnv, self).__init__()
-        self.rs = np.random.RandomState()
+        super(RnnTest, self).__init__()
+        self.random_state = np.random.RandomState()
         self.max_len = 3
         self.state = deque(maxlen=self.max_len)
         self.base = 3
@@ -25,7 +18,7 @@ class TestEnv(gym.Env):
         self.info_strs = ['Completely wrong.', 'Partially correct.', 'Partially correct.', 'Completely correct.']
 
     def reset(self):
-        last = self.rs.randint(self.base)
+        last = self.random_state.randint(self.base)
         self.state.extend([last] * self.max_len)
         return self._get_obs()
 
@@ -37,7 +30,7 @@ class TestEnv(gym.Env):
             action //= self.base
         info_str = self.info_strs[reward]
         reward /= self.base
-        self.state.append(self.rs.randint(self.base))
+        self.state.append(self.random_state.randint(self.base))
         obs = self._get_obs()
         return obs, reward, False, {'str': info_str}
 
@@ -48,7 +41,7 @@ class TestEnv(gym.Env):
 
     def seed(self, seed=None):
         if seed is not None:
-            self.rs.seed(seed)
+            self.random_state.seed(seed)
 
     def render(self, mode='human'):
         print(self.state)

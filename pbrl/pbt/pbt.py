@@ -41,7 +41,7 @@ class PBT:
             self.datas.append(Data(worker_id))
             remote_worker.close()
         self.exploit = exploit
-        self.rs = np.random.RandomState()
+        self.random_state = np.random.RandomState()
         self.state = dict()
 
     def eval(self):
@@ -63,7 +63,7 @@ class PBT:
             # condition 1: bottom 20%
             if i + top_index >= self.worker_num:
                 # top 20%
-                parent_worker_id = sorted_datas[self.rs.choice(top_index)].worker_id
+                parent_worker_id = sorted_datas[self.random_state.choice(top_index)].worker_id
                 data_parent = self.datas[parent_worker_id]
                 data.exploit = parent_worker_id
                 for k, v in data_parent.x.items():
@@ -74,13 +74,13 @@ class PBT:
         for worker_id in range(self.worker_num):
             if self.datas[worker_id].exploit is not None:
                 y = self.datas[worker_id].y
-                if self.rs.random() > 0.5:
+                if self.random_state.random() > 0.5:
                     y['lr'] = y['lr'] * 1.2
                 else:
                     y['lr'] = y['lr'] * 0.8
 
     def seed(self, seed):
-        self.rs.seed(seed)
+        self.random_state.seed(seed)
 
     def send(self):
         for worker_id in range(self.worker_num):
