@@ -54,16 +54,15 @@ class PBT:
 
     def select(self):
         sorted_datas = sorted(self.datas, reverse=True)
-        top_index = round(self.worker_num * 0.2)
         for i in range(self.worker_num):
             worker_id = sorted_datas[i].worker_id
             data = self.datas[worker_id]
             data.order = i
             data.exploit = None
-            # condition 1: bottom 20%
-            if i + top_index >= self.worker_num:
-                # top 20%
-                parent_worker_id = sorted_datas[self.random_state.choice(top_index)].worker_id
+            # worst agent
+            if i == self.worker_num - 1:
+                # best agent
+                parent_worker_id = sorted_datas[0].worker_id
                 data_parent = self.datas[parent_worker_id]
                 data.exploit = parent_worker_id
                 for k, v in data_parent.x.items():
