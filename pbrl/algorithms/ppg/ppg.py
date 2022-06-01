@@ -88,29 +88,6 @@ class PPG(PPO):
 
             loss_info['value'].append(value_loss.item())
 
-    def train_pi(self, loss_info):
-        for mini_batch in self.buffer.generator(self.batch_size, self.chunk_len, self.ks_pi):
-            mini_batch['observations'] = self.policy.normalize_observations(mini_batch['observations'])
-            mini_batch = {k: self.policy.n2t(v) for k, v in mini_batch.items()}
-            observations = mini_batch['observations']
-            actions = mini_batch['actions']
-            advantages = mini_batch['advantages']
-            log_probs_old = mini_batch['log_probs_old']
-            dones = None
-            if self.policy.rnn:
-                dones = mini_batch['dones']
-            policy_loss, entropy_loss = self.actor_loss(observations, actions, advantages, log_probs_old, dones)
-            loss = - policy_loss - self.entropy_coef * entropy_loss
-
-            self.optimizer.zero_grad()
-            loss.backward()
-            if self.grad_norm:
-                torch.nn.utils.clip_grad_norm_(self.policy.actor.parameters(), self.grad_norm)
-            self.optimizer.step()
-
-            loss_info['policy'].append(policy_loss.item())
-            loss_info['entropy'].append(entropy_loss.item())
-
     def auxiliary_phase(self, loss_info):
         for mini_batch in self.aux_buffer.generator(self.aux_batch_size, self.chunk_len, self.ks_aux):
             mini_batch['observations'] = self.policy.normalize_observations(mini_batch['observations'])
@@ -174,14 +151,12 @@ class PPG(PPO):
         self.gae()
         self.policy.actor.train()
         self.policy.critic.train()
-        if self.epoch_pi == self.epoch_vf:
-            for i in range(self.epoch_pi):
-                self.train_pi_vf(loss_info)
-        else:
-            for i in range(self.epoch_vf):
-                self.train_vf(loss_info)
-            for i in range(self.epoch_pi):
-                self.train_pi(loss_info)
+        assert self.epoch_vf >= self.epoch_pi
+        for i in range(self.epoch_vf - self.epoch_pi):
+            self.train_vf(loss_info)
+        for i in range(self.epoch_pi):
+            self.train_pi_vf(loss_info)
+
         self.policy.actor.eval()
 
         # auxiliary phase

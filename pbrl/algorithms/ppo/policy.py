@@ -23,6 +23,7 @@ class Policy(BasePolicy):
             obs_clip: float = 10.0,
             reward_clip: float = 10.0,
             device=torch.device('cpu'),
+            deterministic=False,
             actor_type=Actor,
             critic_type=Critic
     ):
@@ -40,6 +41,7 @@ class Policy(BasePolicy):
             reward_clip=reward_clip,
             device=device
         )
+        self.deterministic = deterministic
         if isinstance(self.action_space, Box):
             continuous = True
             action_dim = self.action_space.shape[0]
@@ -87,12 +89,17 @@ class Policy(BasePolicy):
     def act(
             self,
             observations: np.ndarray,
-            states_actor,
-            deterministic: bool = True
+            states_actor
     ):
         observations = self.normalize_observations(observations)
         observations = self.n2t(observations)
         dists, states_actor = self.actor.forward(observations, states=states_actor)
-        actions = dists.sample()
+        if self.deterministic:
+            if self.actor.continuous:
+                actions = dists.mean()
+            else:
+                actions = torch.argmax(dists.logits, -1)
+        else:
+            actions = dists.sample()
         actions = self.t2n(actions)
         return actions, states_actor
