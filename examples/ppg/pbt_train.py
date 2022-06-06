@@ -9,15 +9,9 @@ import torch
 from pbrl.algorithms.ppg import AuxActor, PPG
 from pbrl.algorithms.ppo import Runner, Policy
 from pbrl.common import Logger, update_dict
-from pbrl.common.map import treemap
+from pbrl.common.map import treemap, map_cpu
 from pbrl.env import DummyVecEnv
 from pbrl.pbt import PBT
-
-
-def map_cpu(e):
-    if isinstance(e, torch.Tensor):
-        return e.cpu()
-    return e
 
 
 def test(runner_test, policy, episode_num_test, info):
@@ -95,14 +89,16 @@ def worker_fn(
         )
         # evaluate
         score = test(runner_test, policy, episode_num_test, info)
-        remote.send((trainer.iteration, score, x))
+        remote.send(('exploit', (trainer.iteration, score, x)))
 
-        exploit, _, y = remote.recv()
+        exploit, y = remote.recv()
         if exploit is not None:
             policy.actor.load_state_dict(y['actor'])
             policy.critic.load_state_dict(y['critic'])
             trainer.optimizer.load_state_dict(y['optimizer'])
             trainer.optimizer_aux.load_state_dict(y['optimizer_aux'])
+            for param in trainer.optimizer.param_groups:
+                param['lr'] = y['lr']
             if policy.obs_norm:
                 policy.rms_obs.load(y['rms_obs'])
             if policy.reward_norm:
@@ -111,6 +107,7 @@ def worker_fn(
         logger.log(trainer.timestep, info)
     # save
     trainer.save(filename_policy)
+    remote.send(('close', None))
 
 
 def main():
@@ -124,8 +121,8 @@ def main():
     parser.add_argument('--buffer_size', type=int, default=2048)
     parser.add_argument('--env_num_test', type=int, default=2)
     parser.add_argument('--episode_num_test', type=int, default=10)
-    parser.add_argument('--ready_timestep', type=int, default=102400)
-    parser.add_argument('--timestep', type=int, default=3072000)
+    parser.add_argument('--ready_timestep', type=int, default=40960)
+    parser.add_argument('--timestep', type=int, default=1024000)
 
     args = parser.parse_args()
     policy_config = dict(

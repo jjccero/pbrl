@@ -21,6 +21,7 @@ class PBT:
         self.ps = []
         self.closed = False
         self.datas: List[Data] = []
+        self.objs = []
         ctx = multiprocessing.get_context('spawn')
         for worker_id in range(self.worker_num):
             remote, remote_worker = ctx.Pipe()
@@ -42,15 +43,6 @@ class PBT:
             remote_worker.close()
         self.exploit = exploit
         self.random_state = np.random.RandomState()
-        self.state = dict()
-
-    def eval(self):
-        for remote, data in zip(self.remotes, self.datas):
-            iteration, score, x = remote.recv()
-            data.iteration = iteration
-            data.score = score
-            data.x = x
-            data.y.clear()
 
     def select(self):
         sorted_datas = sorted(self.datas, reverse=True)
@@ -59,6 +51,7 @@ class PBT:
             data = self.datas[worker_id]
             data.order = i
             data.exploit = None
+            data.y.clear()
             # worst agent
             if i == self.worker_num - 1:
                 # best agent
@@ -85,32 +78,44 @@ class PBT:
         for worker_id in range(self.worker_num):
             exploit = self.datas[worker_id].exploit
             y = self.datas[worker_id].y
-            score = self.datas[worker_id].score
-            self.remotes[worker_id].send(
-                (exploit, score, y)
-            )
+            self.remotes[worker_id].send((exploit, y))
+
+    def recv(self):
+        self.objs.clear()
+        cmd = None
+        for worker_id in range(self.worker_num):
+            cmd, obj = self.remotes[worker_id].recv()
+            self.objs.append(obj)
+        return cmd
+
+    def close(self):
+        self.closed = True
+        self.datas.clear()
+        self.objs.clear()
+        for worker_id in range(self.worker_num):
+            self.ps[worker_id].join()
 
     def run(self):
-        try:
-            # after ready_timestep
-            while True:
-                # receive hyperparameters and weights from workers
-                # evaluate new policies
-                self.eval()
+        while True:
+            # receive hyperparameters and weights from workers
+            cmd = self.recv()
+            # evaluate new policies
+            if cmd == 'exploit':
                 if self.exploit:
+                    for worker_id in range(self.worker_num):
+                        (iteration, score, x) = self.objs[worker_id]
+                        data = self.datas[worker_id]
+                        data.iteration = iteration
+                        data.score = score
+                        data.x = x
                     # copy hyperparameters and weights
                     self.select()
                     # perturb hyperparameters
                     self.explore()
                 # send new data to workers
                 self.send()
-        except:
-            self.close()
-
-    def close(self):
-        self.closed = True
-        for p in self.ps:
-            p.join()
+            elif cmd == 'close':
+                break
 
     def __del__(self):
         if not self.closed:

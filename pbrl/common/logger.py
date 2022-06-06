@@ -65,3 +65,6 @@ class Logger:
                     s += ', {}: {:.2f}±{:.2f}'.format(key, scalar_value1, scalar_value2)
             value.clear()
         logging.info(s)
+
+    def __del__(self):
+        self.writer.close()
