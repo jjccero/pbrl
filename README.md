@@ -61,7 +61,7 @@ Then you can access the training information by visiting http://localhost:6006/ 
         * [ppg/](/pbrl/algorithms/ppg) Phasic Policy Gradient
         * [ppo/](/pbrl/algorithms/ppo) Proximal Policy Optimization
         * [td3/](/pbrl/algorithms/td3) Twin Delayed Deep Deterministic Policy Gradient
-    * [competitive/](/pbrl/competitive) Multi-agent support (Future)
+    * [competitive/](/pbrl/competitive) Multi-agent support
     * [env/](/pbrl/env)
         * [env.py](/pbrl/env/env.py) wrapped vector environment
         * [test.py](/pbrl/env/test/rnn.py) test

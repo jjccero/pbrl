@@ -11,7 +11,7 @@ logging.basicConfig(
 
 def update_dict(d1: dict, d2: dict, prefix=''):
     for key, value in d2.items():
-        if key in ('timestep', 'info'):
+        if key == 'timestep':
             continue
         key = prefix + key
         if key not in d1:
@@ -29,6 +29,8 @@ class Logger:
     def log(self, global_step: int, d: dict):
         s = '{}'.format(global_step)
         for key, value in d.items():
+            if 'info' in key:
+                continue
             if len(value) == 0:
                 continue
 

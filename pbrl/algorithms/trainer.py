@@ -1,8 +1,6 @@
 from typing import Optional
 
 import torch
-
-from pbrl.algorithms.runner import BaseRunner
 from pbrl.common.logger import update_dict, Logger
 from pbrl.policy.policy import BasePolicy
 
@@ -26,11 +24,11 @@ class Trainer:
     def learn(
             self,
             timestep: int,
-            runner_train: BaseRunner,
+            runner_train,
             timestep_update: int,
             logger: Optional[Logger] = None,
             log_interval=0,
-            runner_test: Optional[BaseRunner] = None,
+            runner_test: Optional = None,
             test_interval=0,
             episode_test=0
     ):

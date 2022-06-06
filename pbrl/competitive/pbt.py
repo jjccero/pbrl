@@ -14,31 +14,27 @@ class CompetitivePBT(PBT):
     def run(self):
         while True:
             cmd = self.recv()
-            if cmd == 'up':
+            if cmd == 'syn':
                 deltas = np.zeros(self.worker_num)
                 for worker_id in range(self.worker_num):
                     iteration, x, eval_results = self.objs[worker_id]
                     data = self.datas[worker_id]
                     data.iteration = iteration
                     data.x = x
-                    for a, b, episode, win, lose in eval_results:
-                        tie = episode - win - lose
+                    for a, b, res in eval_results:
                         ea = self.expectation(a, b)
-                        delta = self.k * (win + 0.5 * tie - episode * ea)
+                        delta = self.k * (res - ea)
                         deltas[a] += delta
                         deltas[b] -= delta
-                for worker_id in range(self.worker_num):
-                    self.datas[worker_id].score += deltas[worker_id]
-                    self.remotes[worker_id].send(self.datas[worker_id].score)
-            elif cmd == 'down':
                 pop = []
                 for worker_id in range(self.worker_num):
                     x = self.datas[worker_id].x
                     pop.append(
-                        {k: x[v] for k in ('actor', 'rms_obs')}
+                        {k: x[k] for k in ('actor', 'rms_obs')}
                     )
                 for worker_id in range(self.worker_num):
-                    self.remotes[worker_id].send(pop)
+                    self.datas[worker_id].score += deltas[worker_id]
+                    self.remotes[worker_id].send((self.datas[worker_id].score, pop))
             elif cmd == 'exploit':
                 if self.exploit:
                     self.select()
