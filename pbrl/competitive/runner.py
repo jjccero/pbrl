@@ -50,7 +50,7 @@ class CompetitiveRunner:
         for i in range(self.agent_num):
             policy = self.policies[i]
             if i != self.collect_index and self.random_opponent:
-                self.opponent_id = np.random.randint(self.agent_num)
+                self.opponent_id = np.random.randint(len(self.pop))
                 load_from_dict(policy, self.pop[self.opponent_id])
 
     def run(
