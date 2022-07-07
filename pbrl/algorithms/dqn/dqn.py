@@ -2,9 +2,11 @@ import os
 from typing import Optional
 
 import torch
-from pbrl.algorithms.dqn.policy import Policy
+
 from pbrl.algorithms.dqn.buffer import ReplayBuffer
+from pbrl.algorithms.dqn.policy import Policy
 from pbrl.algorithms.trainer import Trainer
+from pbrl.common.map import automap
 
 
 class DQN(Trainer):
@@ -65,10 +67,11 @@ class DQN(Trainer):
         if self.reward_scaling:
             rewards = rewards / self.reward_scaling
         rewards = self.policy.normalize_rewards(rewards)
-        observations, actions, observations_next, rewards, dones = map(
+        observations, actions, observations_next, rewards, dones = automap(
             self.policy.n2t,
             (observations, actions, observations_next, rewards, dones)
         )
+
         critic_loss = self.critic_loss(observations, actions, observations_next, rewards, dones)
 
         self.optimizer_critic.zero_grad()

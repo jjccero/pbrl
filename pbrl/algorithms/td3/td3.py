@@ -6,6 +6,7 @@ import torch
 from pbrl.algorithms.dqn.buffer import ReplayBuffer
 from pbrl.algorithms.td3.policy import Policy
 from pbrl.algorithms.trainer import Trainer
+from pbrl.common.map import automap
 
 
 class TD3(Trainer):
@@ -98,7 +99,7 @@ class TD3(Trainer):
         if self.reward_scaling:
             rewards = rewards / self.reward_scaling
         rewards = self.policy.normalize_rewards(rewards)
-        observations, actions, observations_next, rewards, dones = map(
+        observations, actions, observations_next, rewards, dones = automap(
             self.policy.n2t,
             (observations, actions, observations_next, rewards, dones)
         )

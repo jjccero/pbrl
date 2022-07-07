@@ -5,6 +5,7 @@ import torch
 from gym.spaces import Box, Discrete, Space
 
 from pbrl.algorithms.ppo.net import Actor, Critic
+from pbrl.common.map import automap
 from pbrl.policy.policy import BasePolicy
 
 
@@ -75,14 +76,13 @@ class Policy(BasePolicy):
             states_actor
     ):
         observations = self.normalize_observations(observations, True)
-        observations = self.n2t(observations)
+        observations = automap(self.n2t, observations)
         dists, states_actor = self.actor.forward(observations, states_actor)
         actions = dists.sample()
         log_probs = dists.log_prob(actions)
         if self.actor.continuous:
             log_probs = log_probs.sum(-1)
-        actions = self.t2n(actions)
-        log_probs = self.t2n(log_probs)
+        actions, log_probs = automap(self.t2n, (actions, log_probs))
         return actions, log_probs, states_actor
 
     @torch.no_grad()
@@ -92,7 +92,7 @@ class Policy(BasePolicy):
             states_actor
     ):
         observations = self.normalize_observations(observations)
-        observations = self.n2t(observations)
+        observations = automap(self.n2t, observations)
         dists, states_actor = self.actor.forward(observations, states=states_actor)
         if self.deterministic:
             if self.actor.continuous:

@@ -9,7 +9,7 @@ import torch
 from pbrl.algorithms.ppg import AuxActor, PPG
 from pbrl.algorithms.ppo import Runner, Policy
 from pbrl.common import Logger, update_dict
-from pbrl.common.map import treemap, map_cpu
+from pbrl.common.map import automap, map_cpu
 from pbrl.env import DummyVecEnv
 from pbrl.pbt import PBT
 
@@ -77,16 +77,19 @@ def worker_fn(
         )
         hyperparameter = dict(lr=trainer.lr)
         update_dict(info, hyperparameter, 'hyperparameter/')
-
-        x = dict(
-            actor=treemap(map_cpu, policy.actor.state_dict()),
-            critic=treemap(map_cpu, policy.critic.state_dict()),
-            optimizer=treemap(map_cpu, trainer.optimizer.state_dict()),
-            optimizer_aux=treemap(map_cpu, trainer.optimizer_aux.state_dict()),
-            lr=trainer.lr,
-            rms_obs=policy.rms_obs,
-            rms_reward=policy.rms_reward
+        x = automap(
+            map_cpu,
+            dict(
+                actor=policy.actor.state_dict(),
+                critic=policy.critic.state_dict(),
+                optimizer=trainer.optimizer.state_dict(),
+                optimizer_aux=trainer.optimizer_aux.state_dict(),
+                lr=trainer.lr,
+                rms_obs=policy.rms_obs,
+                rms_reward=policy.rms_reward
+            )
         )
+
         # evaluate
         score = test(runner_test, policy, episode_num_test, info)
         remote.send(('exploit', (trainer.iteration, score, x)))

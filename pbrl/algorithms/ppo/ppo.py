@@ -7,6 +7,7 @@ import torch
 from pbrl.algorithms.ppo.buffer import PGBuffer
 from pbrl.algorithms.ppo.policy import Policy
 from pbrl.algorithms.trainer import Trainer
+from pbrl.common.map import automap
 
 
 class PPO(Trainer):
@@ -60,11 +61,12 @@ class PPO(Trainer):
     def gae(self):
         # reshape to (env_num, step_num, ...)
         # normalize obs and obs_next if obs_norm
-        observations = self.policy.n2t(
-            self.policy.normalize_observations(np.stack(self.buffer.observations, axis=1))
-        )
-        observations_next = self.policy.n2t(
-            self.policy.normalize_observations(self.buffer.observations_next)
+        observations, observations_next = automap(
+            self.policy.n2t,
+            (
+                self.policy.normalize_observations(np.stack(self.buffer.observations, axis=1)),
+                self.policy.normalize_observations(self.buffer.observations_next)
+            )
         )
         dones = None
         if self.policy.rnn:
@@ -129,7 +131,7 @@ class PPO(Trainer):
     def train_pi_vf(self, loss_info):
         for mini_batch in self.buffer.generator(self.batch_size, self.chunk_len, self.ks):
             mini_batch['observations'] = self.policy.normalize_observations(mini_batch['observations'])
-            mini_batch = {k: self.policy.n2t(v) for k, v in mini_batch.items()}
+            mini_batch = automap(self.policy.n2t, mini_batch)
             observations = mini_batch['observations']
             actions = mini_batch['actions']
             advantages = mini_batch['advantages']

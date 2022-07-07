@@ -4,7 +4,9 @@ from typing import Optional, List, Type
 import numpy as np
 import torch
 from gym.spaces import Space
+
 from pbrl.algorithms.dqn.net import QNet
+from pbrl.common.map import automap
 from pbrl.policy.policy import BasePolicy
 
 
@@ -63,7 +65,7 @@ class Policy(BasePolicy):
         if random:
             actions = self.random_action(observations.shape[0])
         else:
-            observations = self.n2t(observations)
+            observations = automap(self.n2t, observations)
             q_values, states_actor = self.critic.forward(observations, states_actor)
             actions = torch.argmax(q_values, -1)
             actions = self.t2n(actions)
@@ -76,7 +78,7 @@ class Policy(BasePolicy):
             states_actor
     ):
         observations = self.normalize_observations(observations)
-        observations = self.n2t(observations)
+        observations = automap(self.n2t, observations)
         q_values, states_actor = self.critic.forward(observations, states_actor)
         actions = torch.argmax(q_values, -1)
         actions = self.t2n(actions)

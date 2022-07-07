@@ -1,12 +1,15 @@
 import torch
 
 
-def treemap(f, d: dict):
-    return {k: treemap(f, v) if isinstance(v, dict) else f(v) for k, v in d.items()}
-
-
-def listmap(f, l: list):
-    return [listmap(f, e) if isinstance(e, list) else f(e) for e in l]
+def automap(f, x):
+    if isinstance(x, tuple):
+        return tuple(automap(f, e) for e in x)
+    elif isinstance(x, list):
+        return list(automap(f, e) for e in x)
+    elif isinstance(x, dict):
+        return {k: automap(f, v) for k, v in x.items()}
+    else:
+        return f(x)
 
 
 def map_cpu(e):

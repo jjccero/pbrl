@@ -4,7 +4,9 @@ from typing import Optional, List, Type
 import numpy as np
 import torch
 from gym.spaces import Space
+
 from pbrl.algorithms.td3.net import DeterministicActor, DoubleQ
+from pbrl.common.map import automap
 from pbrl.policy.policy import BasePolicy
 
 
@@ -73,7 +75,7 @@ class Policy(BasePolicy):
         if random:
             actions = self.random_action(observations.shape[0])
         else:
-            observations = self.n2t(observations)
+            observations = automap(self.n2t, observations)
             actions, states_actor = self.actor.forward(observations, states_actor)
             actions = self.t2n(actions)
             eps = (self.noise_explore * np.random.randn(*actions.shape)).clip(-self.noise_clip, self.noise_clip)
@@ -87,7 +89,7 @@ class Policy(BasePolicy):
             states_actor
     ):
         observations = self.normalize_observations(observations)
-        observations = self.n2t(observations)
+        observations = automap(self.n2t, observations)
         actions, states_actor = self.actor.forward(observations, states_actor)
         actions = self.t2n(actions)
         return actions, states_actor
