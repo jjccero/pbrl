@@ -9,7 +9,7 @@ import torch
 from pbrl.algorithms.ppg import AuxActor, PPG
 from pbrl.algorithms.ppo import Runner, Policy
 from pbrl.common import Logger, update_dict
-from pbrl.common.map import automap, map_cpu
+from pbrl.common.map import auto_map, map_cpu
 from pbrl.env import DummyVecEnv
 from pbrl.pbt import PBT
 
@@ -77,7 +77,7 @@ def worker_fn(
         )
         hyperparameter = dict(lr=trainer.lr)
         update_dict(info, hyperparameter, 'hyperparameter/')
-        x = automap(
+        x = auto_map(
             map_cpu,
             dict(
                 actor=policy.actor.state_dict(),

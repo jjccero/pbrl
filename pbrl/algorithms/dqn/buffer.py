@@ -25,9 +25,9 @@ class ReplayBuffer:
 
     def append(
             self,
-            observations: np.ndarray,
+            observations,
             actions: np.ndarray,
-            observations_next: np.ndarray,
+            observations_next,
             rewards: np.ndarray,
             dones: np.ndarray
     ):

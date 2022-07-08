@@ -6,7 +6,7 @@ import torch
 from pbrl.algorithms.dqn.buffer import ReplayBuffer
 from pbrl.algorithms.td3.policy import Policy
 from pbrl.algorithms.trainer import Trainer
-from pbrl.common.map import automap
+from pbrl.common.map import auto_map
 
 
 class TD3(Trainer):
@@ -52,7 +52,7 @@ class TD3(Trainer):
         )
         self.reward_scaling = reward_scaling
 
-    def policy_loss(self, observations: torch.Tensor) -> torch.Tensor:
+    def policy_loss(self, observations) -> torch.Tensor:
         actions, _ = self.policy.actor.forward(observations)
         if self.double_q:
             q1, q2 = self.policy.critic.forward(observations, actions)
@@ -64,9 +64,9 @@ class TD3(Trainer):
 
     def critic_loss(
             self,
-            observations: torch.Tensor,
+            observations,
             actions: torch.Tensor,
-            observations_next: torch.Tensor,
+            observations_next,
             rewards: torch.Tensor,
             dones: torch.Tensor
     ):
@@ -99,7 +99,7 @@ class TD3(Trainer):
         if self.reward_scaling:
             rewards = rewards / self.reward_scaling
         rewards = self.policy.normalize_rewards(rewards)
-        observations, actions, observations_next, rewards, dones = automap(
+        observations, actions, observations_next, rewards, dones = auto_map(
             self.policy.n2t,
             (observations, actions, observations_next, rewards, dones)
         )

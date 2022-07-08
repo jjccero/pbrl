@@ -11,13 +11,13 @@ class PGBuffer:
         self.rewards = []
         self.dones = []
 
-        self.observations_next: Optional[np.ndarray] = None
+        self.observations_next = None
         self.advantages: Optional[np.ndarray] = None
         self.returns: Optional[np.ndarray] = None
 
     def append(
             self,
-            observations: np.ndarray,
+            observations,
             actions: np.ndarray,
             log_probs_old: np.ndarray,
             rewards: np.ndarray,
@@ -32,14 +32,7 @@ class PGBuffer:
     def generator(self, batch_size: int, chunk_len: int, ks, shuffle=True):
         env_num = self.observations_next.shape[0]
         step_num = len(self.rewards)
-        data = {
-            'observations': self.observations,
-            'actions': self.actions,
-            'advantages': self.advantages,
-            'log_probs_old': self.log_probs_old,
-            'returns': self.returns,
-            'dones': self.dones
-        }
+
         if chunk_len:
             assert step_num % chunk_len == 0
             assert batch_size % chunk_len == 0
@@ -47,7 +40,7 @@ class PGBuffer:
             buffer_size = chunk_size * env_num
             batch_size = batch_size // chunk_len
 
-            def to_chunk(arr):
+            def map_f(arr):
                 # arr's shape is (step_num, env_num, ...)
                 # because chunk_size * chunk_len = step_num
                 # reshape to (env_num, chunk_size * chunk_len, ...)
@@ -59,11 +52,11 @@ class PGBuffer:
                 arr = np.concatenate(arr)
                 return arr
 
-            batch = {k: to_chunk(data[k]) for k in ks}
         else:
             buffer_size = step_num * env_num
-            batch = {key: np.concatenate(data[key]) for key in ks}
+            map_f = np.concatenate
 
+        batch = {key: map_f(self.__getattribute__(key)) for key in ks}
         indices = np.arange(buffer_size)
         if shuffle:
             np.random.shuffle(indices)

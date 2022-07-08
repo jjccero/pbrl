@@ -1,18 +1,37 @@
+import gym.spaces
 import torch
 
 
-def automap(f, x):
+def auto_map(f, x, **kwargs):
     if isinstance(x, tuple):
-        return tuple(automap(f, e) for e in x)
-    elif isinstance(x, list):
-        return list(automap(f, e) for e in x)
+        return tuple(auto_map(f, e) for e in x)
     elif isinstance(x, dict):
-        return {k: automap(f, v) for k, v in x.items()}
+        return {k: auto_map(f, v) for k, v in x.items()}
     else:
-        return f(x)
+        return f(x, **kwargs)
+
+
+def merge_map(f, x, **kwargs):
+    # x must be a tuple
+    first_item = x[0]
+    if isinstance(first_item, tuple):
+        return tuple(merge_map(f, e) for e in zip(*x))
+    elif isinstance(first_item, dict):
+        return {k: merge_map(f, tuple(e[k] for e in x)) for k in first_item}
+    else:
+        return f(x, **kwargs)
 
 
 def map_cpu(e):
     if isinstance(e, torch.Tensor):
         return e.cpu()
     return e
+
+
+def map_space(f, x):
+    if isinstance(x, gym.spaces.Dict):
+        return {k: map_space(f, v) for k, v in x.spaces.items()}
+    elif isinstance(x, gym.spaces.Tuple):
+        return tuple(map_space(f, e) for e in x.spaces)
+    else:
+        return f(x)

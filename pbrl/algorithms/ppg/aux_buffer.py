@@ -12,7 +12,7 @@ class AuxBuffer:
 
     def append(
             self,
-            observations: List[np.ndarray],
+            observations: List,
             dones: List[np.ndarray],
             vtargs: np.ndarray
     ):
@@ -23,19 +23,14 @@ class AuxBuffer:
     def generator(self, batch_size: int, chunk_len: int, ks):
         n_pi = len(self.vtargs)
         step_num, env_num = self.vtargs[0].shape
-        data = {
-            'observations': self.observations,
-            'dones': self.dones,
-            'vtargs': self.vtargs,
-            'dists_old': self.dists_old
-        }
+
         if chunk_len:
             chunk_size = step_num // chunk_len
             buffer_size = chunk_size * n_pi * env_num
             batch_size = batch_size // chunk_len
 
             # process RNN chunk
-            def to_rnn_chunk(arr):
+            def map_f(arr):
                 # arr's shape is (n_pi, chunk_size * chunk_len, env_num, ...)
                 # because chunk_size * chunk_len = step_num
                 # reshape to (n_pi * env_num, chunk_size * chunk_len, ...)
@@ -49,10 +44,13 @@ class AuxBuffer:
                 arr = np.concatenate(arr)
                 return arr
 
-            batch = {k: to_rnn_chunk(data[k]) for k in ks}
         else:
             buffer_size = step_num * n_pi * env_num
-            batch = {key: np.concatenate(np.concatenate(data[key], axis=1)) for key in ks}
+
+            def map_f(arr):
+                return np.concatenate(np.concatenate(arr, axis=1))
+
+        batch = {key: map_f(self.__getattribute__(key)) for key in ks}
 
         indices = np.arange(buffer_size)
         np.random.shuffle(indices)

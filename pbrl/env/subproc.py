@@ -2,6 +2,7 @@ import multiprocessing
 from multiprocessing.connection import Connection
 
 import numpy as np
+from pbrl.common.map import merge_map
 from pbrl.common.pickle import CloudpickleWrapper
 from pbrl.env.env import VectorEnv, reset_after_done
 
@@ -19,12 +20,12 @@ def worker_fn(env_fns: CloudpickleWrapper, remote: Connection, remote_parent: Co
     while True:
         cmd, data = remote.recv()
         if cmd == STEP:
-            remote.send([reset_after_done(env, action) for env, action in zip(envs, data)])
+            remote.send(tuple(reset_after_done(env, action) for env, action in zip(envs, data)))
         elif cmd == RENDER:
             for env in envs:
                 env.render()
         elif cmd == RESET:
-            remote.send([env.reset() for env in envs])
+            remote.send(tuple(env.reset() for env in envs))
         elif cmd == SPACE:
             remote.send((envs[0].observation_space, envs[0].action_space))
         elif cmd == SEED:
@@ -37,7 +38,7 @@ def worker_fn(env_fns: CloudpickleWrapper, remote: Connection, remote_parent: Co
 
 
 def flatten(x):
-    return [x__ for x_ in x for x__ in x_]
+    return tuple(x__ for x_ in x for x__ in x_)
 
 
 class SubProcVecEnv(VectorEnv):
@@ -70,16 +71,18 @@ class SubProcVecEnv(VectorEnv):
     def reset(self):
         for remote in self.remotes:
             remote.send((RESET, None))
-        observations = flatten([remote.recv() for remote in self.remotes])
-        observations = np.asarray(observations)
-        return observations
+        observations = flatten(remote.recv() for remote in self.remotes)
+        return merge_map(np.asarray, observations)
 
     def step(self, actions):
         actions = np.array_split(actions, self.worker_num)
         for remote, action in zip(self.remotes, actions):
             remote.send((STEP, action))
-        results = flatten([remote.recv() for remote in self.remotes])
-        observations, rewards, dones, infos = map(np.asarray, zip(*results))
+        results = flatten(remote.recv() for remote in self.remotes)
+        observations, rewards, dones, infos = zip(*results)
+        observations = merge_map(np.asarray, observations)
+        rewards = np.asarray(rewards)
+        dones = np.asarray(dones)
         return observations, rewards, dones, infos
 
     def render(self):

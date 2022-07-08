@@ -1,5 +1,5 @@
 from abc import abstractmethod
-from typing import Tuple
+from typing import Tuple, Any
 
 import gym
 import numpy as np
@@ -25,11 +25,11 @@ class VectorEnv:
         self.closed = False
 
     @abstractmethod
-    def reset(self) -> np.ndarray:
+    def reset(self):
         pass
 
     @abstractmethod
-    def step(self, actions) -> Tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
+    def step(self, actions) -> Tuple[Any, np.ndarray, np.ndarray, np.ndarray]:
         pass
 
     @abstractmethod

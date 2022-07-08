@@ -6,7 +6,7 @@ import torch
 from pbrl.algorithms.dqn.buffer import ReplayBuffer
 from pbrl.algorithms.dqn.policy import Policy
 from pbrl.algorithms.trainer import Trainer
-from pbrl.common.map import automap
+from pbrl.common.map import auto_map
 
 
 class DQN(Trainer):
@@ -40,9 +40,9 @@ class DQN(Trainer):
 
     def critic_loss(
             self,
-            observations: torch.Tensor,
+            observations,
             actions: torch.Tensor,
-            observations_next: torch.Tensor,
+            observations_next,
             rewards: torch.Tensor,
             dones: torch.Tensor
     ):
@@ -67,7 +67,7 @@ class DQN(Trainer):
         if self.reward_scaling:
             rewards = rewards / self.reward_scaling
         rewards = self.policy.normalize_rewards(rewards)
-        observations, actions, observations_next, rewards, dones = automap(
+        observations, actions, observations_next, rewards, dones = auto_map(
             self.policy.n2t,
             (observations, actions, observations_next, rewards, dones)
         )

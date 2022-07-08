@@ -1,5 +1,5 @@
 import numpy as np
-
+from pbrl.common.map import merge_map
 from pbrl.env.env import VectorEnv, reset_after_done
 
 
@@ -10,12 +10,14 @@ class DummyVecEnv(VectorEnv):
         super(DummyVecEnv, self).__init__(len(make_env), env.observation_space, env.action_space)
 
     def reset(self):
-        observations = np.asarray([env.reset() for env in self.envs])
-        return observations
+        return merge_map(np.asarray, tuple(env.reset() for env in self.envs))
 
     def step(self, actions):
-        results = [reset_after_done(env, action) for env, action in zip(self.envs, actions)]
-        observations, rewards, dones, infos = map(np.asarray, zip(*results))
+        results = (reset_after_done(env, action) for env, action in zip(self.envs, actions))
+        observations, rewards, dones, infos = zip(*results)
+        observations = merge_map(np.asarray, observations)
+        rewards = np.asarray(rewards)
+        dones = np.asarray(dones)
         return observations, rewards, dones, infos
 
     def render(self):

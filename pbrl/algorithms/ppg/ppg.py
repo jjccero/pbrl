@@ -6,7 +6,7 @@ from torch.distributions import Normal, Categorical
 
 from pbrl.algorithms.ppg.aux_buffer import AuxBuffer
 from pbrl.algorithms.ppo import PPO, Policy
-from pbrl.common.map import automap
+from pbrl.common.map import auto_map
 
 
 class PPG(PPO):
@@ -73,7 +73,7 @@ class PPG(PPO):
     def train_vf(self, loss_info):
         for mini_batch in self.buffer.generator(self.batch_size, self.chunk_len, self.ks_vf):
             mini_batch['observations'] = self.policy.normalize_observations(mini_batch['observations'])
-            mini_batch = automap(self.policy.n2t, mini_batch)
+            mini_batch = auto_map(self.policy.n2t, mini_batch)
             observations = mini_batch['observations']
             returns = mini_batch['returns']
             dones = None
@@ -92,7 +92,7 @@ class PPG(PPO):
     def auxiliary_phase(self, loss_info):
         for mini_batch in self.aux_buffer.generator(self.aux_batch_size, self.chunk_len, self.ks_aux):
             mini_batch['observations'] = self.policy.normalize_observations(mini_batch['observations'])
-            mini_batch = automap(self.policy.n2t, mini_batch)
+            mini_batch = auto_map(self.policy.n2t, mini_batch)
             observations = mini_batch['observations']
             vtargs = mini_batch['vtargs']
             dists_old = mini_batch['dists_old']
@@ -127,7 +127,7 @@ class PPG(PPO):
     def compute_dists_old(self):
         states_actor = None
         for i in range(self.n_pi):
-            observations = automap(
+            observations = auto_map(
                 self.policy.n2t,
                 self.policy.normalize_observations(self.aux_buffer.observations[i].swapaxes(0, 1))
             )

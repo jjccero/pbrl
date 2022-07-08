@@ -8,7 +8,7 @@
 
 ## Introduction
 
-Small, fast and reproducible implementation of reinforcement learning algorithms.  
+Small, fast and <font color=#FF0000>reproducible</font> implementation of reinforcement learning algorithms.  
 Support [OpenAI Gym](https://gym.openai.com/) (Atari, [MuJoCo](http://www.mujoco.org/) and Box2D) and custom tasks.
 
 ### Installation

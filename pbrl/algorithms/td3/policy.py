@@ -6,7 +6,7 @@ import torch
 from gym.spaces import Space
 
 from pbrl.algorithms.td3.net import DeterministicActor, DoubleQ
-from pbrl.common.map import automap
+from pbrl.common.map import auto_map
 from pbrl.policy.policy import BasePolicy
 
 
@@ -27,7 +27,9 @@ class Policy(BasePolicy):
             device=torch.device('cpu'),
             noise_explore=0.1,
             noise_clip=0.5,
-            critic=True
+            critic=True,
+            actor_type=DeterministicActor,
+            critic_type=DoubleQ
     ):
         super(Policy, self).__init__(
             observation_space=observation_space,
@@ -49,12 +51,12 @@ class Policy(BasePolicy):
             hidden_sizes=self.hidden_sizes,
             activation=self.activation
         )
-        self.actor = DeterministicActor(rnn=None, **config_net).to(self.device)
+        self.actor = actor_type(rnn=None, **config_net).to(self.device)
         self.actor_target = copy.deepcopy(self.actor)
         self.actor_target.eval()
         if critic:
             # the critic may be centerQ
-            self.critic = DoubleQ(**config_net).to(self.device)
+            self.critic = critic_type(**config_net).to(self.device)
             self.critic_target = copy.deepcopy(self.critic)
             self.critic_target.eval()
         else:
@@ -67,7 +69,7 @@ class Policy(BasePolicy):
     @torch.no_grad()
     def step(
             self,
-            observations: np.ndarray,
+            observations,
             states_actor,
             random=False
     ):
@@ -75,7 +77,7 @@ class Policy(BasePolicy):
         if random:
             actions = self.random_action(observations.shape[0])
         else:
-            observations = automap(self.n2t, observations)
+            observations = auto_map(self.n2t, observations)
             actions, states_actor = self.actor.forward(observations, states_actor)
             actions = self.t2n(actions)
             eps = (self.noise_explore * np.random.randn(*actions.shape)).clip(-self.noise_clip, self.noise_clip)
@@ -85,11 +87,11 @@ class Policy(BasePolicy):
     @torch.no_grad()
     def act(
             self,
-            observations: np.ndarray,
+            observations,
             states_actor
     ):
         observations = self.normalize_observations(observations)
-        observations = automap(self.n2t, observations)
+        observations = auto_map(self.n2t, observations)
         actions, states_actor = self.actor.forward(observations, states_actor)
         actions = self.t2n(actions)
         return actions, states_actor

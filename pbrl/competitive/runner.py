@@ -69,7 +69,7 @@ class CompetitiveRunner:
 
         log_probs: Optional[np.ndarray] = None
         while True:
-            observations: Optional[np.ndarray] = None
+            observations = None
             actions: Optional[np.ndarray] = None
             wrapped_actions = []
             for i in range(self.agent_num):

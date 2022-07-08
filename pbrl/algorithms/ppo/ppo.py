@@ -7,7 +7,7 @@ import torch
 from pbrl.algorithms.ppo.buffer import PGBuffer
 from pbrl.algorithms.ppo.policy import Policy
 from pbrl.algorithms.trainer import Trainer
-from pbrl.common.map import automap
+from pbrl.common.map import auto_map
 
 
 class PPO(Trainer):
@@ -61,7 +61,7 @@ class PPO(Trainer):
     def gae(self):
         # reshape to (env_num, step_num, ...)
         # normalize obs and obs_next if obs_norm
-        observations, observations_next = automap(
+        observations, observations_next = auto_map(
             self.policy.n2t,
             (
                 self.policy.normalize_observations(np.stack(self.buffer.observations, axis=1)),
@@ -95,7 +95,7 @@ class PPO(Trainer):
 
     def actor_loss(
             self,
-            observations: torch.Tensor,
+            observations,
             actions: torch.Tensor,
             advantages: torch.Tensor,
             log_probs_old: torch.Tensor,
@@ -117,7 +117,7 @@ class PPO(Trainer):
 
     def critic_loss(
             self,
-            observations: torch.Tensor,
+            observations,
             returns: torch.Tensor,
             dones: Optional[torch.Tensor]
     ) -> torch.Tensor:
@@ -131,7 +131,7 @@ class PPO(Trainer):
     def train_pi_vf(self, loss_info):
         for mini_batch in self.buffer.generator(self.batch_size, self.chunk_len, self.ks):
             mini_batch['observations'] = self.policy.normalize_observations(mini_batch['observations'])
-            mini_batch = automap(self.policy.n2t, mini_batch)
+            mini_batch = auto_map(self.policy.n2t, mini_batch)
             observations = mini_batch['observations']
             actions = mini_batch['actions']
             advantages = mini_batch['advantages']

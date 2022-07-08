@@ -6,7 +6,7 @@ import torch
 from gym.spaces import Space
 
 from pbrl.algorithms.dqn.net import QNet
-from pbrl.common.map import automap
+from pbrl.common.map import auto_map
 from pbrl.policy.policy import BasePolicy
 
 
@@ -25,7 +25,8 @@ class Policy(BasePolicy):
             obs_clip: float = 10.0,
             reward_clip: float = 10.0,
             device=torch.device('cpu'),
-            critic=True
+            critic=True,
+            critic_type=QNet
     ):
         super(Policy, self).__init__(
             observation_space=observation_space,
@@ -48,8 +49,8 @@ class Policy(BasePolicy):
             activation=self.activation,
             rnn=rnn
         )
-        self.critic = QNet(**config_net).to(self.device)
-        self.critic_target: Optional[QNet] = None
+        self.critic = critic_type(**config_net).to(self.device)
+        self.critic_target: Optional[critic_type] = None
         if critic:
             self.critic_target = copy.deepcopy(self.critic)
             self.critic_target.eval()
@@ -57,7 +58,7 @@ class Policy(BasePolicy):
     @torch.no_grad()
     def step(
             self,
-            observations: np.ndarray,
+            observations,
             states_actor,
             random=False
     ):
@@ -65,7 +66,7 @@ class Policy(BasePolicy):
         if random:
             actions = self.random_action(observations.shape[0])
         else:
-            observations = automap(self.n2t, observations)
+            observations = auto_map(self.n2t, observations)
             q_values, states_actor = self.critic.forward(observations, states_actor)
             actions = torch.argmax(q_values, -1)
             actions = self.t2n(actions)
@@ -74,11 +75,11 @@ class Policy(BasePolicy):
     @torch.no_grad()
     def act(
             self,
-            observations: np.ndarray,
+            observations,
             states_actor
     ):
         observations = self.normalize_observations(observations)
-        observations = automap(self.n2t, observations)
+        observations = auto_map(self.n2t, observations)
         q_values, states_actor = self.critic.forward(observations, states_actor)
         actions = torch.argmax(q_values, -1)
         actions = self.t2n(actions)

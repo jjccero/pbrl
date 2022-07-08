@@ -48,22 +48,17 @@ class BasePolicy:
         self.rnn = rnn
         self.device = device
         self.obs_norm = obs_norm
-        self.rms_obs = RunningMeanStd(
-            np.zeros(observation_space.shape, dtype=np.float64),
-            np.ones(observation_space.shape, dtype=np.float64)
-        ) if self.obs_norm else None
+        self.rms_obs = RunningMeanStd(observation_space, obs_clip, True) if self.obs_norm else None
         self.gamma = gamma
-        self.obs_clip = obs_clip
         self.reward_norm = reward_norm
-        self.rms_reward = RunningMeanStd(0.0, 1.0) if self.reward_norm else None
-        self.reward_clip = reward_clip
+        self.rms_reward = RunningMeanStd(None, reward_clip, False) if self.reward_norm else None
         self.action_wrapper = get_action_wrapper(action_space, clip_fn)
         self.actor: Optional[torch.nn.Module] = None
         self.critic: Optional[torch.nn.Module] = None
 
     def step(
             self,
-            observations: np.ndarray,
+            observations,
             states_actor,
             **kwargs
     ):
@@ -90,12 +85,11 @@ class BasePolicy:
             n = n.astype(np.int64)
         return torch.from_numpy(n).to(self.device)
 
-    def normalize_observations(self, observations: np.ndarray, update=False):
+    def normalize_observations(self, observations, update=False):
         if self.obs_norm:
             if update:
                 self.rms_obs.update(observations)
-            observations = (observations - self.rms_obs.mean) / np.sqrt(self.rms_obs.var + self.rms_obs.eps)
-            observations = np.clip(observations, -self.obs_clip, self.obs_clip)
+            observations = self.rms_obs.normalize(observations)
         return observations
 
     def normalize_rewards(
@@ -110,8 +104,7 @@ class BasePolicy:
                 returns[:] = returns * self.gamma + rewards
                 self.rms_reward.update(returns)
                 returns[dones] = 0.0
-            rewards = rewards / np.sqrt(self.rms_reward.var + self.rms_reward.eps)
-            rewards = np.clip(rewards, -self.reward_clip, self.reward_clip)
+            rewards = self.rms_reward.normalize(rewards)
 
         return rewards
 
