@@ -27,7 +27,6 @@ class Policy(BasePolicy):
             device=torch.device('cpu'),
             noise_explore=0.1,
             noise_clip=0.5,
-            critic=True,
             actor_type=DeterministicActor,
             critic_type=DoubleQ
     ):
@@ -54,14 +53,13 @@ class Policy(BasePolicy):
         self.actor = actor_type(rnn=None, **config_net).to(self.device)
         self.actor_target = copy.deepcopy(self.actor)
         self.actor_target.eval()
-        if critic:
+
+        self.critic_target = None
+        if critic_type is not None:
             # the critic may be centerQ
             self.critic = critic_type(**config_net).to(self.device)
             self.critic_target = copy.deepcopy(self.critic)
             self.critic_target.eval()
-        else:
-            self.critic = None
-            self.critic_target = None
 
         self.noise_explore = noise_explore
         self.noise_clip = noise_clip
@@ -71,11 +69,11 @@ class Policy(BasePolicy):
             self,
             observations,
             states_actor,
-            random=False
+            random_env_num=None
     ):
         observations = self.normalize_observations(observations, True)
-        if random:
-            actions = self.random_action(observations.shape[0])
+        if random_env_num is not None:
+            actions = self.random_action(random_env_num)
         else:
             observations = auto_map(self.n2t, observations)
             actions, states_actor = self.actor.forward(observations, states_actor)

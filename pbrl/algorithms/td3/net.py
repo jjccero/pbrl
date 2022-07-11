@@ -2,6 +2,7 @@ from typing import Optional, List
 
 import torch
 import torch.nn as nn
+
 from pbrl.policy.base import Mlp, Cnn, Rnn, Deterministic
 
 

@@ -35,7 +35,7 @@ def main():
         hidden_sizes=[256, 256],
         activation=torch.nn.ReLU,
         obs_norm=args.obs_norm,
-        critic=False,
+        critic_type=None,
         device=torch.device('cuda:0') if torch.cuda.is_available() else torch.device('cpu')
     )
     # load policy from disk

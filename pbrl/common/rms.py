@@ -52,8 +52,8 @@ class RunningMeanStd:
         self.var = o.var
         self.n = o.n
         self.eps = o.eps
-        self.clip = clip
-        self.reduce_mean = reduce_mean
+        self.clip = o.clip
+        self.reduce_mean = o.reduce_mean
 
     def update(self, x):
         merge_map(update, (x, self.mean, self.var), rms=self)

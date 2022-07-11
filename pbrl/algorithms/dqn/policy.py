@@ -60,11 +60,11 @@ class Policy(BasePolicy):
             self,
             observations,
             states_actor,
-            random=False
+            random_env_num
     ):
         observations = self.normalize_observations(observations, True)
-        if random:
-            actions = self.random_action(observations.shape[0])
+        if random_env_num is not None:
+            actions = self.random_action(random_env_num)
         else:
             observations = auto_map(self.n2t, observations)
             q_values, states_actor = self.critic.forward(observations, states_actor)

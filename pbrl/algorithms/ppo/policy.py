@@ -51,6 +51,7 @@ class Policy(BasePolicy):
             action_dim = self.action_space.n
         else:
             raise not NotImplementedError('Neither Box or Discrete!')
+
         self.actor = actor_type(
             obs_dim=self.observation_space.shape,
             action_dim=action_dim,
@@ -60,7 +61,7 @@ class Policy(BasePolicy):
             continuous=continuous
         ).to(self.device)
         self.actor.eval()
-        if critic_type:
+        if critic_type is not None:
             self.critic = critic_type(
                 obs_dim=self.observation_space.shape,
                 hidden_sizes=self.hidden_sizes,

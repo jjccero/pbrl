@@ -156,6 +156,7 @@ class PPO(Trainer):
             loss_info['entropy'].append(entropy_loss.item())
 
     def update(self):
+        self.iteration += 1
         loss_info = dict(value=[], policy=[], entropy=[])
 
         self.policy.actor.train()

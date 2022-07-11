@@ -24,11 +24,7 @@ class DQN(Trainer):
         super(DQN, self).__init__()
         self.policy = policy
         self.batch_size = batch_size
-        self.buffer = ReplayBuffer(
-            buffer_size=buffer_size,
-            observation_space=policy.observation_space,
-            action_space=policy.action_space
-        )
+        self.buffer = ReplayBuffer(buffer_size=buffer_size)
         self.gamma = gamma
         self.target_freq = target_freq
         self.lr_critic = lr_critic
@@ -49,7 +45,7 @@ class DQN(Trainer):
         with torch.no_grad():
             q_target, _ = self.policy.critic_target.forward(observations_next)
             q_target = q_target.max(-1)[0]
-            y = rewards + (1.0 - dones) * self.gamma * q_target
+            y = rewards + ~dones * self.gamma * q_target
 
         q, _ = self.policy.critic.forward(observations)
         q = q.gather(1, actions.unsqueeze(-1)).squeeze()
@@ -58,6 +54,7 @@ class DQN(Trainer):
         return critic_loss
 
     def update(self):
+        self.iteration += 1
         loss_info = dict()
         self.policy.critic.train()
 

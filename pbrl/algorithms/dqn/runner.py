@@ -2,8 +2,9 @@ import time
 from typing import Optional
 
 import numpy as np
-from pbrl.algorithms.runner import BaseRunner
+
 from pbrl.algorithms.dqn.buffer import ReplayBuffer
+from pbrl.algorithms.runner import BaseRunner
 from pbrl.env.env import VectorEnv
 from pbrl.policy.policy import BasePolicy
 
@@ -34,20 +35,21 @@ class Runner(BaseRunner):
         episode_infos = []
 
         update = buffer is not None
-        random = False
+        random_env_num = None
         # TD3
         if self.fill and update:
             self.fill = False
             timestep_num += self.start_timestep
-            random = True
+            random_env_num = self.env_num
 
         while True:
             observations = self.observations
             if update:
                 if self.epsilon is not None:
                     # DQN
-                    random = np.random.random() < self.epsilon
-                actions, self.states_actor = policy.step(observations, self.states_actor, random=random)
+                    if np.random.random() < self.epsilon:
+                        random_env_num = self.env_num
+                actions, self.states_actor = policy.step(observations, self.states_actor, random_env_num=random_env_num)
             else:
                 actions, self.states_actor = policy.act(observations, self.states_actor)
             self.observations, rewards, dones, infos = self.env.step(policy.wrap_actions(actions))

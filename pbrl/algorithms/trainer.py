@@ -52,7 +52,6 @@ class Trainer:
                 self.scheduler.step()
                 train_info['lr'] = self.scheduler.get_last_lr()
             update_dict(info, train_info, 'train/')
-            self.iteration += 1
             done = self.timestep >= timestep
 
             if test_interval and (self.iteration % test_interval == 0 or done):

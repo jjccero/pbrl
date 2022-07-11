@@ -60,6 +60,7 @@ Then you can access the training information by visiting http://localhost:6006/ 
         * [dqn/](/pbrl/algorithms/dqn) Deep Q Network
         * [ppg/](/pbrl/algorithms/ppg) Phasic Policy Gradient
         * [ppo/](/pbrl/algorithms/ppo) Proximal Policy Optimization
+        * [sac/](/pbrl/algorithms/sac) Soft Actor Critic
         * [td3/](/pbrl/algorithms/td3) Twin Delayed Deep Deterministic Policy Gradient
     * [competitive/](/pbrl/competitive) Multi-agent support
     * [env/](/pbrl/env)
@@ -79,9 +80,9 @@ Then you can access the training information by visiting http://localhost:6006/ 
 * Generalized Advantage Estimation (GAE)
 * Observation Normalization and Reward Scaling (RunningMeanStd)
 
-### TD3's Tricks
+### TD3 and SAC's Tricks
 
-* Infinite MDPs (without time limit)
+* Infinite MDPs (no time limit)
 
 ### Population Based Training (PBT)
 

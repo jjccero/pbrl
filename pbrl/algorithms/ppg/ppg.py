@@ -146,6 +146,7 @@ class PPG(PPO):
             self.aux_buffer.dists_old.append(dists)
 
     def update(self):
+        self.iteration += 1
         loss_info = dict(value=[], policy=[], entropy=[])
 
         # it is PPO
@@ -169,7 +170,7 @@ class PPG(PPO):
                 vtargs=self.buffer.returns
             )
 
-            if (self.iteration + 1) % self.n_pi == 0:
+            if self.iteration % self.n_pi == 0:
                 loss_info.update(dict(kl=[], aux_pi=[], aux_vf=[]))
                 self.compute_dists_old()
                 self.policy.actor.train()
