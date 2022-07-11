@@ -13,7 +13,8 @@ class AuxActor(Actor):
             hidden_sizes: List,
             activation,
             rnn: Optional[str],
-            continuous: bool
+            continuous: bool,
+            conditional_std: bool
     ):
         super(AuxActor, self).__init__(
             obs_dim=obs_dim,
@@ -21,7 +22,8 @@ class AuxActor(Actor):
             hidden_sizes=hidden_sizes,
             activation=activation,
             rnn=rnn,
-            continuous=continuous
+            continuous=continuous,
+            conditional_std=conditional_std
         )
         self.value = Deterministic(self.hidden_size, 1)
         init_weights(self.value, 1.0)

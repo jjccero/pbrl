@@ -2,7 +2,6 @@ from typing import Optional, List
 
 import torch
 import torch.nn as nn
-
 from pbrl.policy.base import Mlp, Cnn, Rnn, Discrete, Continuous, Deterministic, init_weights
 
 
@@ -14,7 +13,8 @@ class Actor(nn.Module):
             hidden_sizes: List,
             activation,
             rnn: Optional[str],
-            continuous: bool
+            continuous: bool,
+            conditional_std: bool
     ):
         super(Actor, self).__init__()
         self.hidden_size = hidden_sizes[-1]
@@ -29,8 +29,7 @@ class Actor(nn.Module):
             self.f2 = Rnn(self.hidden_size, activation, self.rnn)
             init_weights(self.f2)
         if self.continuous:
-            self.dist = Continuous(self.hidden_size, action_dim)
-            torch.nn.init.constant_(self.dist.logstd, -0.5)
+            self.dist = Continuous(self.hidden_size, action_dim, conditional_std)
         else:
             self.dist = Discrete(self.hidden_size, action_dim)
         init_weights(self.dist, 0.01)

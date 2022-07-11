@@ -3,7 +3,6 @@ from typing import Optional, List, Type
 
 import torch
 from gym.spaces import Space
-
 from pbrl.algorithms.ppo.net import Actor, Critic
 from pbrl.algorithms.ppo.policy import Policy as PGPolicy
 from pbrl.algorithms.td3.net import DoubleQ
@@ -24,6 +23,7 @@ class Policy(PGPolicy):
             obs_clip: float = 10.0,
             reward_clip: float = 10.0,
             device=torch.device('cpu'),
+            conditional_std=True,
             deterministic=False,
             actor_type=Actor,
             critic_type=Critic,
@@ -47,6 +47,7 @@ class Policy(PGPolicy):
             obs_clip=obs_clip,
             reward_clip=reward_clip,
             device=device,
+            conditional_std=conditional_std,
             deterministic=deterministic,
             actor_type=actor_type,
             critic_type=critic_type

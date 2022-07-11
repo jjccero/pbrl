@@ -128,14 +128,23 @@ class Discrete(nn.Module):
 
 
 class Continuous(nn.Module):
-    def __init__(self, hidden_size, action_dim):
+    def __init__(self, hidden_size, action_dim, conditional_std):
         super(Continuous, self).__init__()
         self.mean = nn.Linear(hidden_size, action_dim)
-        self.logstd = nn.Parameter(torch.zeros(action_dim))
+        self.conditional_std = conditional_std
+        if self.conditional_std:
+            self.logstd = nn.Linear(hidden_size, action_dim)
+        else:
+            self.logstd_param = nn.Parameter(torch.zeros(action_dim))
+            torch.nn.init.constant_(self.logstd_param, -0.5)
 
     def forward(self, x):
         mean = self.mean(x)
-        std = self.logstd.exp().expand_as(mean)
+        if self.conditional_std:
+            logstd = self.logstd(x)
+            std = torch.clamp(logstd, -20., 2.).exp()
+        else:
+            std = self.logstd_param.exp().expand_as(mean)
         return Normal(mean, std)
 
 

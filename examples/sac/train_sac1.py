@@ -38,7 +38,7 @@ def main():
     torch.manual_seed(args.seed)
     np.random.seed(args.seed)
 
-    filename_log = 'result/{}-{}-{}'.format(args.env, args.seed, int(time.time()))
+    filename_log = 'result/{}-{}-{}-sac1'.format(args.env, args.seed, int(time.time()))
     filename_policy = '{}/policy.pkl'.format(filename_log)
 
     logger = Logger(filename_log)
@@ -56,6 +56,7 @@ def main():
         gamma=args.gamma,
         obs_norm=args.obs_norm,
         reward_norm=args.reward_norm,
+        deterministic=True,
         device=torch.device('cuda:0') if torch.cuda.is_available() else torch.device('cpu'),
         q_target=False
     )

@@ -1,9 +1,7 @@
 from typing import Optional, List, Type
 
-import numpy as np
 import torch
 from gym.spaces import Box, Discrete, Space
-
 from pbrl.algorithms.ppo.net import Actor, Critic
 from pbrl.common.map import auto_map
 from pbrl.policy.policy import BasePolicy
@@ -24,6 +22,7 @@ class Policy(BasePolicy):
             obs_clip: float = 10.0,
             reward_clip: float = 10.0,
             device=torch.device('cpu'),
+            conditional_std=False,
             deterministic=False,
             actor_type=Actor,
             critic_type=Critic
@@ -58,7 +57,8 @@ class Policy(BasePolicy):
             hidden_sizes=self.hidden_sizes,
             activation=self.activation,
             rnn=self.rnn,
-            continuous=continuous
+            continuous=continuous,
+            conditional_std=conditional_std
         ).to(self.device)
         self.actor.eval()
         if critic_type is not None:
@@ -97,7 +97,7 @@ class Policy(BasePolicy):
         dists, states_actor = self.actor.forward(observations, states=states_actor)
         if self.deterministic:
             if self.actor.continuous:
-                actions = dists.mean()
+                actions = dists.mean
             else:
                 actions = torch.argmax(dists.logits, -1)
         else:
