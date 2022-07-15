@@ -4,7 +4,7 @@ import gym
 import torch
 
 from pbrl.algorithms.dqn import Runner
-from pbrl.algorithms.td3 import TD3, Policy
+from pbrl.algorithms.sac import SAC, Policy
 from pbrl.env import DummyVecEnv
 
 
@@ -33,10 +33,11 @@ def main():
         activation=torch.nn.ReLU,
         obs_norm=args.obs_norm,
         critic_type=None,
+        q_type=None,
         device=torch.device('cuda:0') if torch.cuda.is_available() else torch.device('cpu')
     )
     # load policy from disk
-    TD3.load(args.filename, policy)
+    SAC.load(args.filename, policy)
     # define test runner
     runner_test = Runner(env=env_test, render=args.render)
     runner_test.reset()

@@ -12,12 +12,12 @@ from pbrl.env import DummyVecEnv
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument('--env', type=str, default='Walker2d-v3')
+    parser.add_argument('--env', type=str, default='Humanoid-v3')
     parser.add_argument('--test_interval', type=int, default=10)
     parser.add_argument('--log_interval', type=int, default=10)
     parser.add_argument('--resume', action='store_true')
     parser.add_argument('--seed', type=int, default=0)
-    parser.add_argument('--timestep', type=int, default=1000000)
+    parser.add_argument('--timestep', type=int, default=1024000)
     parser.add_argument('--env_num_test', type=int, default=2)
     parser.add_argument('--episode_num_test', type=int, default=10)
 
@@ -69,7 +69,8 @@ def main():
         reward_norm=args.reward_norm,
         gamma=args.gamma,
         device=torch.device('cuda:0') if torch.cuda.is_available() else torch.device('cpu'),
-        actor_type=AuxActor
+        actor_type=AuxActor,
+        deterministic=True
     )
     # define trainer for the task
     trainer = PPG(

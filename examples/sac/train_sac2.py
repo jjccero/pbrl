@@ -56,7 +56,6 @@ def main():
         gamma=args.gamma,
         obs_norm=args.obs_norm,
         reward_norm=args.reward_norm,
-        deterministic=True,
         device=torch.device('cuda:0') if torch.cuda.is_available() else torch.device('cpu')
     )
     # define trainer for the task

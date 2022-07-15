@@ -24,7 +24,7 @@ class Policy(PGPolicy):
             reward_clip: float = 10.0,
             device=torch.device('cpu'),
             conditional_std=True,
-            deterministic=False,
+            deterministic=True,
             actor_type=Actor,
             critic_type=Critic,
             q_type=DoubleQ,

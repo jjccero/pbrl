@@ -12,7 +12,7 @@ def auto_map(f, x, **kwargs):
 
 
 def merge_map(f, x, **kwargs):
-    # x must be a tuple
+    # x must be iterable
     first_item = x[0]
     if isinstance(first_item, tuple):
         return tuple(merge_map(f, e) for e in zip(*x))
