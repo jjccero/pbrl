@@ -18,6 +18,6 @@ setup(
         'cloudpickle',  # fn
         'tensorboard',
         'tensorboardx',
-        'torch>=1.9'
+        'torch>=1.7'
     ]
 )

@@ -5,7 +5,7 @@ import torch
 from gym.spaces import Box, Discrete, Space
 
 from pbrl.common.rms import RunningMeanStd
-from pbrl.policy.wrapper import TanhWrapper, ClipWrapper
+from pbrl.policy.wrapper import ActionWrapper, TanhWrapper, ClipWrapper
 
 
 def get_action_wrapper(action_space, clip_fn: str) -> Optional[Callable[[np.ndarray], np.ndarray]]:
@@ -18,7 +18,7 @@ def get_action_wrapper(action_space, clip_fn: str) -> Optional[Callable[[np.ndar
         elif clip_fn == 'clip':
             return ClipWrapper(low, high)
         else:
-            raise NotImplementedError
+            return ActionWrapper(low, high)
     return action_wrapper
 
 

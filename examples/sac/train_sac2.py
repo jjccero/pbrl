@@ -22,7 +22,7 @@ def main():
     parser.add_argument('--log_interval', type=int, default=5000)
     parser.add_argument('--seed', type=int, default=0)
 
-    parser.add_argument('--start_timestep', type=int, default=5000)
+    parser.add_argument('--start_timestep', type=int, default=1000)
     parser.add_argument('--buffer_size', type=int, default=1000000)
     parser.add_argument('--batch_size', type=int, default=256)
     parser.add_argument('--repeat', type=int, default=1000)

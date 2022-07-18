@@ -1,19 +1,20 @@
 import numpy as np
 
 
-class TanhWrapper:
+class ActionWrapper:
     def __init__(self, low, high):
         self.low = low
         self.high = high
 
     def __call__(self, x):
-        return 0.5 * (self.high - self.low) * np.tanh(x) + 0.5 * (self.low + self.high)
+        return 0.5 * (self.high - self.low) * x + 0.5 * (self.low + self.high)
 
 
-class ClipWrapper:
-    def __init__(self, low, high):
-        self.low = low
-        self.high = high
-
+class TanhWrapper(ActionWrapper):
     def __call__(self, x):
-        return 0.5 * (self.high - self.low) * np.clip(x, -1.0, 1.0) + 0.5 * (self.low + self.high)
+        return super(TanhWrapper, self).__call__(np.tanh(x))
+
+
+class ClipWrapper(ActionWrapper):
+    def __call__(self, x):
+        return super(ClipWrapper, self).__call__(np.clip(x, -1.0, 1.0))

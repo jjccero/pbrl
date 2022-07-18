@@ -16,7 +16,7 @@ def main():
     parser.add_argument('--env', type=str, default='HalfCheetah-v3')
     parser.add_argument('--env_num', type=int, default=1)
     parser.add_argument('--env_num_test', type=int, default=10)
-    parser.add_argument('--episode_num_test', type=int, default=10)
+    parser.add_argument('--episode_num_test', type=int, default=2)
     parser.add_argument('--timestep', type=int, default=1000000)
     parser.add_argument('--test_interval', type=int, default=5000)
     parser.add_argument('--log_interval', type=int, default=5000)
@@ -24,7 +24,7 @@ def main():
     parser.add_argument('--resume', action='store_true')
     parser.add_argument('--seed', type=int, default=0)
 
-    parser.add_argument('--start_timestep', type=int, default=25000)
+    parser.add_argument('--start_timestep', type=int, default=5000)
     parser.add_argument('--buffer_size', type=int, default=1000000)
     parser.add_argument('--batch_size', type=int, default=256)
     parser.add_argument('--timestep_update', type=int, default=1)

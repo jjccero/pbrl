@@ -39,7 +39,7 @@ class Runner(BaseRunner):
         # TD3
         if self.fill and update:
             self.fill = False
-            timestep_num += self.start_timestep
+            timestep_num = self.start_timestep
             random_env_num = self.env_num
 
         while True:
