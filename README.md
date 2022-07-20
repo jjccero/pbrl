@@ -95,7 +95,7 @@ Refer to the [rnn.py](/pbrl/env/test/rnn.py) to customize your own environment.
 
 ```
 cd examples/ppo
-python train.py --env RnnTest-v0 --chunk_len 8 --rnn gru --gamma 0.0 --lr 1e-3 --log_interval 1
+python train.py --env RnnTest-v0 --chunk_len 8 --rnn gru --gamma 0.0 --lr 1e-3 --log_interval 2048
 ```
 
 * General RL algorithms will achieve an average reward of 55.5.

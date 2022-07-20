@@ -13,8 +13,8 @@ from pbrl.env import DummyVecEnv
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('--env', type=str, default='Humanoid-v3')
-    parser.add_argument('--test_interval', type=int, default=10)
-    parser.add_argument('--log_interval', type=int, default=10)
+    parser.add_argument('--test_interval', type=int, default=20480)
+    parser.add_argument('--log_interval', type=int, default=20480)
     parser.add_argument('--resume', action='store_true')
     parser.add_argument('--seed', type=int, default=0)
     parser.add_argument('--timestep', type=int, default=1024000)

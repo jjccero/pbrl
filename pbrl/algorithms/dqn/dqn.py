@@ -16,9 +16,10 @@ class DQN(Trainer):
             buffer_size: int = 20000,
             batch_size: int = 64,
             gamma: float = 0.99,
+            repeat: int = 1,
             target_freq: int = 10,
             lr_critic: float = 1e-3,
-            reward_scaling: Optional[float] = None,
+            reward_scale: Optional[float] = None,
             optimizer=torch.optim.Adam
     ):
         super(DQN, self).__init__()
@@ -26,13 +27,14 @@ class DQN(Trainer):
         self.batch_size = batch_size
         self.buffer = ReplayBuffer(buffer_size=buffer_size)
         self.gamma = gamma
+        self.repeat = repeat
         self.target_freq = target_freq
         self.lr_critic = lr_critic
         self.optimizer_critic = optimizer(
             self.policy.critic.parameters(),
             lr=self.lr_critic
         )
-        self.reward_scaling = reward_scaling
+        self.reward_scale = reward_scale
 
     def critic_loss(
             self,
@@ -45,39 +47,45 @@ class DQN(Trainer):
         with torch.no_grad():
             q_target, _ = self.policy.critic_target.forward(observations_next)
             q_target = q_target.max(-1)[0]
-            y = rewards + ~dones * self.gamma * q_target
+            td_target = rewards + ~dones * self.gamma * q_target
 
         q, _ = self.policy.critic.forward(observations)
         q = q.gather(1, actions.unsqueeze(-1)).squeeze()
-        critic_loss = 0.5 * torch.square(y - q).mean()
+        td_error = 0.5 * torch.square(td_target - q).mean()
 
-        return critic_loss
+        return td_error
 
-    def update(self):
-        self.iteration += 1
-        loss_info = dict()
-        self.policy.critic.train()
-
+    def train_loop(self, loss_info):
         observations, actions, observations_next, rewards, dones = self.buffer.sample(self.batch_size)
         observations = self.policy.normalize_observations(observations)
         observations_next = self.policy.normalize_observations(observations_next)
-        if self.reward_scaling:
-            rewards = rewards / self.reward_scaling
+        if self.reward_scale is not None:
+            rewards = rewards * self.reward_scale
         rewards = self.policy.normalize_rewards(rewards)
         observations, actions, observations_next, rewards, dones = auto_map(
             self.policy.n2t,
             (observations, actions, observations_next, rewards, dones)
         )
 
-        critic_loss = self.critic_loss(observations, actions, observations_next, rewards, dones)
+        td_error = self.critic_loss(observations, actions, observations_next, rewards, dones)
 
         self.optimizer_critic.zero_grad()
-        critic_loss.backward()
+        td_error.backward()
         self.optimizer_critic.step()
 
         if self.iteration % self.target_freq == 0:
             self.policy.critic_target.load_state_dict(self.policy.critic.state_dict())
-        loss_info['q_loss'] = critic_loss.item()
+        loss_info['td'].append(td_error.item())
+
+    def update(self):
+        loss_info = dict(td=[])
+        self.policy.critic.train()
+
+        for _ in range(self.repeat):
+            self.iteration += 1
+            self.train_loop(loss_info)
+
+        self.policy.critic.eval()
         return loss_info
 
     def save(self, filename: str):

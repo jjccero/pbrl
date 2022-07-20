@@ -66,11 +66,11 @@ class SAC(Trainer):
     ):
         with torch.no_grad():
             soft_values_target, _ = self.policy.critic_target.forward(observations_next)
-            y = rewards + ~dones * self.gamma * soft_values_target
+            td_target = rewards + ~dones * self.gamma * soft_values_target
         q1, q2 = self.policy.q.forward(observations, torch.tanh(actions))
-        td1_loss = 0.5 * torch.square(y - q1).mean()
-        td2_loss = 0.5 * torch.square(y - q2).mean()
-        return td1_loss, td2_loss
+        td_error1 = 0.5 * torch.square(td_target - q1).mean()
+        td_error2 = 0.5 * torch.square(td_target - q2).mean()
+        return td_error1, td_error2
 
     def train_loop(self, loss_info: dict):
         observations, actions, observations_next, rewards, dones = self.buffer.sample(self.batch_size)
@@ -100,8 +100,8 @@ class SAC(Trainer):
         soft_value_loss.backward()
         self.optimizer_critic.step()
 
-        td1_loss, td2_loss = self.q_loss(observations, observations_next, actions, rewards, dones)
-        q_loss = td1_loss + td2_loss
+        td_error1, td_error2 = self.q_loss(observations, observations_next, actions, rewards, dones)
+        q_loss = td_error1 + td_error2
         self.optimizer_q.zero_grad()
         q_loss.backward()
         self.optimizer_q.step()
@@ -111,8 +111,8 @@ class SAC(Trainer):
 
         loss_info['policy'].append(policy_loss.item())
         loss_info['value'].append(soft_value_loss.item())
-        loss_info['td1'].append(td1_loss.item())
-        loss_info['td2'].append(td2_loss.item())
+        loss_info['td1'].append(td_error1.item())
+        loss_info['td2'].append(td_error2.item())
 
     def update(self) -> dict:
         loss_info = dict(policy=[], value=[], td1=[], td2=[])

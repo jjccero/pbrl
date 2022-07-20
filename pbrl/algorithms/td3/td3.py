@@ -19,6 +19,7 @@ class TD3(Trainer):
             noise_clip: float = 0.5,
             policy_freq: int = 2,
             double_q: bool = False,
+            repeat: int = 1,
             tau: float = 0.005,
             lr_actor: float = 3e-4,
             lr_critic: float = 3e-4,
@@ -31,6 +32,7 @@ class TD3(Trainer):
         self.gamma = gamma
         self.noise_target = noise_target
         self.noise_clip = noise_clip
+        self.repeat = repeat
         self.policy_freq = policy_freq
         self.double_q = double_q
         self.tau = tau
@@ -74,17 +76,15 @@ class TD3(Trainer):
 
             q1_target, q2_target = self.policy.critic_target.forward(observations_next, actions_target)
             q_target = torch.min(q1_target, q2_target)
-            y = rewards + ~dones * self.gamma * q_target
+            td_target = rewards + ~dones * self.gamma * q_target
 
         q1, q2 = self.policy.critic.forward(observations, actions)
-        td1_loss = 0.5 * torch.square(y - q1).mean()
-        td2_loss = 0.5 * torch.square(y - q2).mean()
+        td_error1 = 0.5 * torch.square(td_target - q1).mean()
+        td_error2 = 0.5 * torch.square(td_target - q2).mean()
 
-        return td1_loss, td2_loss
+        return td_error1, td_error2
 
-    def update(self):
-        self.iteration += 1
-        loss_info = dict()
+    def train_loop(self, loss_info):
         self.policy.critic.train()
 
         observations, actions, observations_next, rewards, dones = self.buffer.sample(self.batch_size)
@@ -96,8 +96,8 @@ class TD3(Trainer):
             self.policy.n2t,
             (observations, actions, observations_next, rewards, dones)
         )
-        td1_loss, td2_loss = self.critic_loss(observations, observations_next, actions, rewards, dones)
-        critic_loss = td1_loss + td2_loss
+        td_error1, td_error2 = self.critic_loss(observations, observations_next, actions, rewards, dones)
+        critic_loss = td_error1 + td_error2
         self.optimizer_critic.zero_grad()
         critic_loss.backward()
         self.optimizer_critic.step()
@@ -116,9 +116,17 @@ class TD3(Trainer):
             Trainer.soft_update(self.policy.critic, self.policy.critic_target, self.tau)
             Trainer.soft_update(self.policy.actor, self.policy.actor_target, self.tau)
 
-            loss_info['policy'] = policy_loss.item()
-        loss_info['td1'] = td1_loss.item()
-        loss_info['td2'] = td2_loss.item()
+            loss_info['policy'].append(policy_loss.item())
+        loss_info['td1'].append(td_error1.item())
+        loss_info['td2'].append(td_error2.item())
+
+    def update(self):
+        loss_info = dict(policy=[], td1=[], td2=[])
+
+        for _ in range(self.repeat):
+            self.iteration += 1
+            self.train_loop(loss_info)
+
         return loss_info
 
     def save(self, filename: str):

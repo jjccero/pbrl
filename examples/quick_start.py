@@ -9,10 +9,10 @@ from pbrl.common import Logger
 from pbrl.env import DummyVecEnv
 
 
-def main(env='CartPole-v0', seed=0):
+def main(env='CartPole-v1', seed=0):
     # define train and test environment
     env_train = DummyVecEnv([lambda: gym.make(env) for _ in range(10)])
-    env_test = DummyVecEnv([lambda: gym.make(env).unwrapped for _ in range(10)])
+    env_test = DummyVecEnv([lambda: gym.make(env) for _ in range(10)])
     # define train and test runner
     runner_train = Runner(env=env_train, start_timestep=10000, fill=True, epsilon=0.2)
     runner_test = Runner(env=env_test)
@@ -43,9 +43,9 @@ def main(env='CartPole-v0', seed=0):
         runner_train=runner_train,
         timestep_update=10,
         logger=Logger('result/quick_start'),
-        log_interval=500,
+        log_interval=5000,
         runner_test=runner_test,
-        test_interval=500,
+        test_interval=5000,
         episode_test=10
     )
     os.system('tensorboard --logdir result/quick_start')

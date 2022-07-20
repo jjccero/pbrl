@@ -66,11 +66,11 @@ class SAC(Trainer):
             q1_target, q2_target = self.policy.q_target.forward(observations_next, squashing_actions_next)
             q_target = torch.min(q1_target, q2_target)
             soft_values_target = q_target - alpha * log_probs_next
-            y = rewards + ~dones * self.gamma * soft_values_target
+            td_target = rewards + ~dones * self.gamma * soft_values_target
         q1, q2 = self.policy.q.forward(observations, torch.tanh(actions))
-        td1_loss = 0.5 * torch.square(y - q1).mean()
-        td2_loss = 0.5 * torch.square(y - q2).mean()
-        return td1_loss, td2_loss
+        td_error1 = 0.5 * torch.square(td_target - q1).mean()
+        td_error2 = 0.5 * torch.square(td_target - q2).mean()
+        return td_error1, td_error2
 
     def policy_loss(self, observations, alpha):
         squashing_actions, log_probs = self.policy.squashing_action_log_prob(observations)
@@ -91,8 +91,8 @@ class SAC(Trainer):
         )
 
         alpha = torch.exp(self.log_alpha.detach())
-        td1_loss, td2_loss = self.q_loss(observations, observations_next, actions, rewards, dones, alpha)
-        q_loss = td1_loss + td2_loss
+        td_error1, td_error2 = self.q_loss(observations, observations_next, actions, rewards, dones, alpha)
+        q_loss = td_error1 + td_error2
         self.optimizer_q.zero_grad()
         q_loss.backward()
         self.optimizer_q.step()
@@ -111,8 +111,8 @@ class SAC(Trainer):
             Trainer.soft_update(self.policy.q, self.policy.q_target, self.tau)
 
         loss_info['policy'].append(policy_loss.item())
-        loss_info['td1'].append(td1_loss.item())
-        loss_info['td2'].append(td2_loss.item())
+        loss_info['td1'].append(td_error1.item())
+        loss_info['td2'].append(td_error2.item())
         loss_info['alpha'].append(alpha.item())
 
     def update(self) -> dict:

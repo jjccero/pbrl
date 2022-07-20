@@ -12,8 +12,8 @@ from pbrl.env import SubProcVecEnv, DummyVecEnv
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('--env', type=str, default='Walker2d-v3')
-    parser.add_argument('--test_interval', type=int, default=10)
-    parser.add_argument('--log_interval', type=int, default=10)
+    parser.add_argument('--test_interval', type=int, default=20480)
+    parser.add_argument('--log_interval', type=int, default=20480)
     parser.add_argument('--subproc', action='store_true')
     parser.add_argument('--resume', action='store_true')
     parser.add_argument('--seed', type=int, default=0)
