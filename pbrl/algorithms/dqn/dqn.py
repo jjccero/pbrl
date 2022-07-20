@@ -20,7 +20,8 @@ class DQN(Trainer):
             target_freq: int = 10,
             lr_critic: float = 1e-3,
             reward_scale: Optional[float] = None,
-            optimizer=torch.optim.Adam
+            optimizer=torch.optim.Adam,
+            epsilon_scheduler=None
     ):
         super(DQN, self).__init__()
         self.policy = policy
@@ -35,6 +36,7 @@ class DQN(Trainer):
             lr=self.lr_critic
         )
         self.reward_scale = reward_scale
+        self.epsilon_scheduler = epsilon_scheduler
 
     def critic_loss(
             self,
@@ -77,6 +79,11 @@ class DQN(Trainer):
             self.policy.critic_target.load_state_dict(self.policy.critic.state_dict())
         loss_info['td'].append(td_error.item())
 
+    def run_scheduler(self, loss_info):
+        if self.epsilon_scheduler is not None:
+            loss_info['epsilon'] = self.policy.epsilon
+            self.policy.epsilon = self.epsilon_scheduler(self.timestep)
+
     def update(self):
         loss_info = dict(td=[])
         self.policy.critic.train()
@@ -86,6 +93,7 @@ class DQN(Trainer):
             self.train_loop(loss_info)
 
         self.policy.critic.eval()
+        self.run_scheduler(loss_info)
         return loss_info
 
     def save(self, filename: str):

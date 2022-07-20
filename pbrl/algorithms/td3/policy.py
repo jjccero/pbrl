@@ -26,7 +26,6 @@ class Policy(BasePolicy):
             reward_clip: float = 10.0,
             device=torch.device('cpu'),
             noise_explore=0.1,
-            noise_clip=0.5,
             actor_type=DeterministicActor,
             critic_type=DoubleQ
     ):
@@ -62,23 +61,23 @@ class Policy(BasePolicy):
             self.critic_target.eval()
 
         self.noise_explore = noise_explore
-        self.noise_clip = noise_clip
 
     @torch.no_grad()
     def step(
             self,
             observations,
             states_actor,
-            random_env_num=None
+            random,
+            env_num
     ):
         observations = self.normalize_observations(observations, True)
-        if random_env_num is not None:
-            actions = self.random_action(random_env_num)
+        if random:
+            actions = self.random_action(env_num)
         else:
             observations = auto_map(self.n2t, observations)
             actions, states_actor = self.actor.forward(observations, states_actor)
             actions = self.t2n(actions)
-            eps = (self.noise_explore * np.random.randn(*actions.shape)).clip(-self.noise_clip, self.noise_clip)
+            eps = self.noise_explore * np.random.randn(*actions.shape)
             actions = (actions + eps).clip(-1.0, 1.0)
         return actions, states_actor
 

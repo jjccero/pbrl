@@ -70,8 +70,7 @@ def main():
         reward_norm=args.reward_norm,
         gamma=args.gamma,
         device=torch.device('cuda:0') if torch.cuda.is_available() else torch.device('cpu'),
-        noise_explore=args.noise_explore,
-        noise_clip=args.noise_clip
+        noise_explore=args.noise_explore
     )
     # define trainer for the task
     trainer = TD3(
@@ -92,8 +91,7 @@ def main():
     runner_train = Runner(
         env=env_train,
         max_episode_steps=gym.make(args.env).spec.max_episode_steps,
-        start_timestep=args.start_timestep,
-        fill=True
+        start_timestep=args.start_timestep
     )
     runner_test = Runner(env_test)
 

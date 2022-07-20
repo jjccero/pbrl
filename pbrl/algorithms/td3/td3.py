@@ -17,6 +17,8 @@ class TD3(Trainer):
             gamma: float = 0.99,
             noise_target: float = 0.2,
             noise_clip: float = 0.5,
+            explore_scheduler=None,
+            target_scheduler=None,
             policy_freq: int = 2,
             double_q: bool = False,
             repeat: int = 1,
@@ -32,6 +34,8 @@ class TD3(Trainer):
         self.gamma = gamma
         self.noise_target = noise_target
         self.noise_clip = noise_clip
+        self.explore_scheduler = explore_scheduler
+        self.target_scheduler = target_scheduler
         self.repeat = repeat
         self.policy_freq = policy_freq
         self.double_q = double_q
@@ -120,6 +124,15 @@ class TD3(Trainer):
         loss_info['td1'].append(td_error1.item())
         loss_info['td2'].append(td_error2.item())
 
+    def run_scheduler(self, loss_info):
+        if self.explore_scheduler is not None:
+            loss_info['noise_explore'] = self.policy.noise_explore
+            self.policy.noise_explore = self.explore_scheduler(self.timestep)
+
+        if self.target_scheduler is not None:
+            loss_info['noise_target'] = self.policy.noise_target
+            self.noise_target = self.target_scheduler(self.timestep)
+
     def update(self):
         loss_info = dict(policy=[], td1=[], td2=[])
 
@@ -127,6 +140,7 @@ class TD3(Trainer):
             self.iteration += 1
             self.train_loop(loss_info)
 
+        self.run_scheduler(loss_info)
         return loss_info
 
     def save(self, filename: str):

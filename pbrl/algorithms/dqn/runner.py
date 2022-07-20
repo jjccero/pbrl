@@ -15,9 +15,7 @@ class Runner(BaseRunner):
             env: VectorEnv,
             max_episode_steps=np.inf,
             render: Optional[float] = None,
-            start_timestep=0,
-            fill=False,
-            epsilon: Optional[float] = None
+            start_timestep: Optional[int] = None
     ):
         super(Runner, self).__init__(
             env=env,
@@ -25,8 +23,6 @@ class Runner(BaseRunner):
             render=render
         )
         self.start_timestep = start_timestep
-        self.fill = fill
-        self.epsilon = epsilon
 
     def run(self, policy: BasePolicy, buffer: Optional[ReplayBuffer] = None, timestep_num=0, episode_num=0):
         timestep = 0
@@ -35,21 +31,22 @@ class Runner(BaseRunner):
         episode_infos = []
 
         update = buffer is not None
-        random_env_num = None
+        random = False
         # TD3
-        if self.fill and update:
-            self.fill = False
+        if self.start_timestep is not None:
+            random = True
             timestep_num = self.start_timestep
-            random_env_num = self.env_num
+            self.start_timestep = None
 
         while True:
             observations = self.observations
             if update:
-                if self.epsilon is not None:
-                    # DQN
-                    if np.random.random() < self.epsilon:
-                        random_env_num = self.env_num
-                actions, self.states_actor = policy.step(observations, self.states_actor, random_env_num=random_env_num)
+                actions, self.states_actor = policy.step(
+                    observations=observations,
+                    states_actor=self.states_actor,
+                    random=random,
+                    env_num=self.env_num
+                )
             else:
                 actions, self.states_actor = policy.act(observations, self.states_actor)
             self.observations, rewards, dones, infos = self.env.step(policy.wrap_actions(actions))

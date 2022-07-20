@@ -72,8 +72,7 @@ def main():
     runner_train = Runner(
         env=env_train,
         max_episode_steps=gym.make(args.env).spec.max_episode_steps,
-        start_timestep=args.start_timestep,
-        fill=True
+        start_timestep=args.start_timestep
     )
     runner_test = Runner(env_test)
 

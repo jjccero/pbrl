@@ -14,7 +14,7 @@ def main(env='CartPole-v1', seed=0):
     env_train = DummyVecEnv([lambda: gym.make(env) for _ in range(10)])
     env_test = DummyVecEnv([lambda: gym.make(env) for _ in range(10)])
     # define train and test runner
-    runner_train = Runner(env=env_train, start_timestep=10000, fill=True, epsilon=0.2)
+    runner_train = Runner(env=env_train, start_timestep=10000)
     runner_test = Runner(env=env_test)
 
     env_train.seed(seed)
@@ -28,6 +28,7 @@ def main(env='CartPole-v1', seed=0):
         hidden_sizes=[128, 128, 128],
         activation=torch.nn.ReLU,
         gamma=0.9,
+        epsilon=0.2,
         device=torch.device('cuda:0') if torch.cuda.is_available() else torch.device('cpu')
     )
     # define trainer for the task

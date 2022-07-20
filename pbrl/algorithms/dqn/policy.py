@@ -21,6 +21,7 @@ class Policy(BasePolicy):
             clip_fn='clip',
             obs_norm: bool = False,
             reward_norm: bool = False,
+            epsilon: Optional[float] = 0.2,
             gamma: float = 0.99,
             obs_clip: float = 10.0,
             reward_clip: float = 10.0,
@@ -54,17 +55,19 @@ class Policy(BasePolicy):
         if critic:
             self.critic_target = copy.deepcopy(self.critic)
             self.critic_target.eval()
+        self.epsilon = epsilon
 
     @torch.no_grad()
     def step(
             self,
             observations,
             states_actor,
-            random_env_num
+            random,
+            env_num
     ):
         observations = self.normalize_observations(observations, True)
-        if random_env_num is not None:
-            actions = self.random_action(random_env_num)
+        if random or (self.epsilon is not None and np.random.random() < self.epsilon):
+            actions = self.random_action(env_num)
         else:
             observations = auto_map(self.n2t, observations)
             q_values, states_actor = self.critic.forward(observations, states_actor)
