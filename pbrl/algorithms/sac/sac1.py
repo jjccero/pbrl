@@ -117,17 +117,10 @@ class SAC(Trainer):
     def update(self) -> dict:
         loss_info = dict(policy=[], value=[], td1=[], td2=[])
 
-        self.policy.critic.train()
-        self.policy.q.train()
-        self.policy.actor.train()
-
         for _ in range(self.repeat):
             self.iteration += 1
             self.train_loop(loss_info)
 
-        self.policy.critic.eval()
-        self.policy.q.eval()
-        self.policy.actor.eval()
         return loss_info
 
     def save(self, filename: str):

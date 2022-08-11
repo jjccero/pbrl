@@ -34,7 +34,7 @@ Try replacing CartPole-v0 above with MountainCar-v0 (rl-baselines3-zoo):
 
 ```
 cd examples/ppo
-python train.py --obs_norm --reward_norm --adv_norm --gae_lambda 0.98 --repeat 4 --buffer_size 256 --env MountainCar-v0
+python train.py --obs_norm --reward_norm --adv_norm --timestep 200000 --gae_lambda 0.98 --repeat 4 --buffer_size 256 --env MountainCar-v0
 ```
 
 MuJoCo:
@@ -75,7 +75,7 @@ Then you can access the training information by visiting http://localhost:6006/ 
 
 ### PPO's Tricks
 
-* Parallel collecting
+* Orthogonal Initialize
 * Learning rate decay
 * Generalized Advantage Estimation (GAE)
 * Observation Normalization and Reward Scaling (RunningMeanStd)
@@ -83,6 +83,7 @@ Then you can access the training information by visiting http://localhost:6006/ 
 ### TD3 and SAC's Tricks
 
 * Infinite MDPs (no time limit)
+* Deterministic Action
 
 ### Population Based Training (PBT)
 

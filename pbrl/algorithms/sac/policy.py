@@ -67,7 +67,7 @@ class Policy(PGPolicy):
                 hidden_sizes=hidden_sizes,
                 activation=activation
             ).to(self.device)
-
+            self.q.eval()
             if q_target:
                 self.q_target = copy.deepcopy(self.q)
                 self.q_target.eval()

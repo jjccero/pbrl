@@ -159,16 +159,11 @@ class PPO(Trainer):
         self.iteration += 1
         loss_info = dict(value=[], policy=[], entropy=[])
 
-        self.policy.actor.train()
         for i in range(self.repeat):
             if i == 0 or self.recompute_adv:
-                self.policy.critic.eval()
                 self.gae()
-                self.policy.critic.train()
             # sample batch from buffer
             self.train_pi_vf(loss_info)
-        self.policy.actor.eval()
-        self.policy.critic.eval()
         # on-policy
         self.buffer.clear()
         return loss_info

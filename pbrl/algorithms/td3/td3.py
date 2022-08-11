@@ -89,8 +89,6 @@ class TD3(Trainer):
         return td_error1, td_error2
 
     def train_loop(self, loss_info):
-        self.policy.critic.train()
-
         observations, actions, observations_next, rewards, dones = self.buffer.sample(self.batch_size)
         observations = self.policy.normalize_observations(observations)
         observations_next = self.policy.normalize_observations(observations_next)
@@ -106,17 +104,13 @@ class TD3(Trainer):
         critic_loss.backward()
         self.optimizer_critic.step()
 
-        self.policy.critic.eval()
         if self.iteration % self.policy_freq == 0:
-            self.policy.actor.train()
-
             policy_loss = self.policy_loss(observations)
             actor_loss = -policy_loss
             self.optimizer_actor.zero_grad()
             actor_loss.backward()
             self.optimizer_actor.step()
 
-            self.policy.actor.eval()
             Trainer.soft_update(self.policy.critic, self.policy.critic_target, self.tau)
             Trainer.soft_update(self.policy.actor, self.policy.actor_target, self.tau)
 
@@ -127,11 +121,11 @@ class TD3(Trainer):
     def run_scheduler(self, loss_info):
         if self.explore_scheduler is not None:
             loss_info['noise_explore'] = self.policy.noise_explore
-            self.policy.noise_explore = self.explore_scheduler(self.timestep)
+            self.policy.noise_explore = self.explore_scheduler(self)
 
         if self.target_scheduler is not None:
-            loss_info['noise_target'] = self.policy.noise_target
-            self.noise_target = self.target_scheduler(self.timestep)
+            loss_info['noise_target'] = self.noise_target
+            self.noise_target = self.target_scheduler(self)
 
     def update(self):
         loss_info = dict(policy=[], td1=[], td2=[])

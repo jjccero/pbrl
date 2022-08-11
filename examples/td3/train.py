@@ -15,7 +15,7 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('--env', type=str, default='HalfCheetah-v3')
     parser.add_argument('--env_num', type=int, default=1)
-    parser.add_argument('--env_num_test', type=int, default=10)
+    parser.add_argument('--env_num_test', type=int, default=1)
     parser.add_argument('--episode_num_test', type=int, default=2)
     parser.add_argument('--timestep', type=int, default=1000000)
     parser.add_argument('--test_interval', type=int, default=5000)
@@ -29,8 +29,6 @@ def main():
     parser.add_argument('--batch_size', type=int, default=256)
     parser.add_argument('--timestep_update', type=int, default=1)
     parser.add_argument('--policy_freq', type=int, default=2)
-    parser.add_argument('--chunk_len', type=int, default=None)
-    parser.add_argument('--rnn', type=str, default=None)
 
     parser.add_argument('--gamma', type=float, default=0.99)
     parser.add_argument('--tau', type=float, default=0.005)
@@ -63,7 +61,6 @@ def main():
     policy = Policy(
         observation_space=env_train.observation_space,
         action_space=env_train.action_space,
-        rnn=args.rnn,
         hidden_sizes=[256, 256],
         activation=torch.nn.ReLU,
         obs_norm=args.obs_norm,

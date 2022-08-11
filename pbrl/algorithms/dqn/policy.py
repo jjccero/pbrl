@@ -26,7 +26,7 @@ class Policy(BasePolicy):
             obs_clip: float = 10.0,
             reward_clip: float = 10.0,
             device=torch.device('cpu'),
-            critic=True,
+            critic_target=True,
             critic_type=QNet
     ):
         super(Policy, self).__init__(
@@ -51,8 +51,9 @@ class Policy(BasePolicy):
             rnn=rnn
         )
         self.critic = critic_type(**config_net).to(self.device)
+        self.critic.eval()
         self.critic_target: Optional[critic_type] = None
-        if critic:
+        if critic_target:
             self.critic_target = copy.deepcopy(self.critic)
             self.critic_target.eval()
         self.epsilon = epsilon

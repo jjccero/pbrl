@@ -150,17 +150,13 @@ class PPG(PPO):
         loss_info = dict(value=[], policy=[], entropy=[])
 
         # it is PPO
-        self.policy.critic.eval()
         self.gae()
-        self.policy.actor.train()
-        self.policy.critic.train()
+
         assert self.epoch_vf >= self.epoch_pi
         for i in range(self.epoch_vf - self.epoch_pi):
             self.train_vf(loss_info)
         for i in range(self.epoch_pi):
             self.train_pi_vf(loss_info)
-
-        self.policy.actor.eval()
 
         # auxiliary phase
         if self.n_pi > 0 and self.epoch_aux > 0:
@@ -173,10 +169,8 @@ class PPG(PPO):
             if self.iteration % self.n_pi == 0:
                 loss_info.update(dict(kl=[], aux_pi=[], aux_vf=[]))
                 self.compute_dists_old()
-                self.policy.actor.train()
                 for i in range(self.epoch_aux):
                     self.auxiliary_phase(loss_info)
-                self.policy.actor.eval()
                 self.aux_buffer.clear()
         # on-policy
         self.buffer.clear()

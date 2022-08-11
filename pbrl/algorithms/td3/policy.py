@@ -18,7 +18,7 @@ class Policy(BasePolicy):
             hidden_sizes: List,
             activation: Type[torch.nn.Module],
             rnn: Optional[str] = None,
-            clip_fn='clip',
+            clip_fn='',
             obs_norm: bool = False,
             reward_norm: bool = False,
             gamma: float = 0.99,
@@ -51,6 +51,7 @@ class Policy(BasePolicy):
         )
         self.actor = actor_type(rnn=None, **config_net).to(self.device)
         self.actor_target = copy.deepcopy(self.actor)
+        self.actor.eval()
         self.actor_target.eval()
 
         self.critic_target = None
@@ -58,6 +59,7 @@ class Policy(BasePolicy):
             # the critic may be centerQ
             self.critic = critic_type(**config_net).to(self.device)
             self.critic_target = copy.deepcopy(self.critic)
+            self.critic.eval()
             self.critic_target.eval()
 
         self.noise_explore = noise_explore

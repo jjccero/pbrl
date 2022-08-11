@@ -2,10 +2,11 @@ import argparse
 
 import gym
 import torch
-from pbrl.algorithms.ppo import Policy, PPO, Runner
 
-from pbrl.env import DummyVecEnv
 from pbrl.algorithms.ppg import AuxActor
+from pbrl.algorithms.ppo import Policy, PPO, Runner
+from pbrl.env import DummyVecEnv
+
 
 def main():
     parser = argparse.ArgumentParser()
