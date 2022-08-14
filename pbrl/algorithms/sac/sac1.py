@@ -20,7 +20,7 @@ class SAC(Trainer):
             lr_actor: float = 3e-4,
             lr_critic: float = 3e-4,
             lr_q: float = 3e-4,
-            repeat: int = 1000,
+            repeat: int = 1,
             reward_scale: Optional[float] = None,
             optimizer=torch.optim.Adam
     ):
@@ -52,8 +52,9 @@ class SAC(Trainer):
         assert self.policy.critic_target is not None
 
     def soft_value_loss(self, observations, q: torch.Tensor, log_probs: torch.Tensor) -> torch.Tensor:
+        soft_value_target = (q - log_probs).detach()
         soft_values, _ = self.policy.critic.forward(observations)
-        soft_value_loss = 0.5 * torch.square(soft_values - q + log_probs).mean()
+        soft_value_loss = 0.5 * torch.square(soft_values - soft_value_target).mean()
         return soft_value_loss
 
     def q_loss(
@@ -67,7 +68,7 @@ class SAC(Trainer):
         with torch.no_grad():
             soft_values_target, _ = self.policy.critic_target.forward(observations_next)
             td_target = rewards + ~dones * self.gamma * soft_values_target
-        q1, q2 = self.policy.q.forward(observations, torch.tanh(actions))
+        q1, q2 = self.policy.q.forward(observations, actions)
         td_error1 = 0.5 * torch.square(td_target - q1).mean()
         td_error2 = 0.5 * torch.square(td_target - q2).mean()
         return td_error1, td_error2
@@ -95,7 +96,7 @@ class SAC(Trainer):
         policy_loss.backward()
         self.optimizer_actor.step()
 
-        soft_value_loss = self.soft_value_loss(observations, q.detach(), log_probs.detach())
+        soft_value_loss = self.soft_value_loss(observations, q, log_probs)
         self.optimizer_critic.zero_grad()
         soft_value_loss.backward()
         self.optimizer_critic.step()

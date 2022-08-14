@@ -20,10 +20,9 @@ def main():
     parser.add_argument('--render', type=float, default=0.005)
 
     args = parser.parse_args()
-    torch.manual_seed(args.seed)
-
     # define test environment
     env_test = DummyVecEnv([lambda: gym.make(args.env) for _ in range(args.env_num_test)])
+    torch.manual_seed(args.seed)
     env_test.seed(args.seed)
     # define policy
     policy = Policy(

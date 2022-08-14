@@ -30,6 +30,7 @@ class BaseRunner:
         self.states_actor = None
         self.episode_rewards[:] = 0.
         self.returns[:] = 0.
+        self.episode_steps[:] = 0
 
         if self.render is not None:
             self.env.render()

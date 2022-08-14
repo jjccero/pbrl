@@ -1,11 +1,13 @@
 import copy
 from typing import Optional, List, Type
 
+import numpy as np
 import torch
 from gym.spaces import Space
 from pbrl.algorithms.ppo.net import Actor, Critic
 from pbrl.algorithms.ppo.policy import Policy as PGPolicy
 from pbrl.algorithms.td3.net import DoubleQ
+from pbrl.common.map import auto_map
 
 
 class Policy(PGPolicy):
@@ -16,7 +18,7 @@ class Policy(PGPolicy):
             hidden_sizes: List,
             activation: Type[torch.nn.Module],
             rnn: Optional[str] = None,
-            clip_fn='tanh',
+            clip_fn='',
             obs_norm: bool = False,
             reward_norm: bool = False,
             gamma: float = 0.99,
@@ -76,9 +78,27 @@ class Policy(PGPolicy):
             self,
             observations,
             states_actor,
-            **kwargs
+            random=False,
+            env_num=0
     ):
-        actions, _, states_actor = super(Policy, self).step(observations, states_actor)
+        observations = self.normalize_observations(observations, True)
+        if random:
+            actions = self.random_action(env_num)
+        else:
+            observations = auto_map(self.n2t, observations)
+            dists, states_actor = self.actor.forward(observations, states_actor)
+            actions = dists.sample()
+            actions = self.t2n(actions)
+            actions = np.tanh(actions)
+        return actions, states_actor
+
+    def act(
+            self,
+            observations,
+            states_actor
+    ):
+        actions, states_actor = super(Policy, self).act(observations, states_actor)
+        actions = np.tanh(actions)
         return actions, states_actor
 
     def squashing_action_log_prob(self, observations):

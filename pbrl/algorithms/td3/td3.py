@@ -1,7 +1,6 @@
 import os
 
 import torch
-
 from pbrl.algorithms.dqn.buffer import ReplayBuffer
 from pbrl.algorithms.td3.policy import Policy
 from pbrl.algorithms.trainer import Trainer
@@ -85,7 +84,6 @@ class TD3(Trainer):
         q1, q2 = self.policy.critic.forward(observations, actions)
         td_error1 = 0.5 * torch.square(td_target - q1).mean()
         td_error2 = 0.5 * torch.square(td_target - q2).mean()
-
         return td_error1, td_error2
 
     def train_loop(self, loss_info):

@@ -20,7 +20,7 @@ class SAC(Trainer):
             lr_actor: float = 3e-4,
             lr_q: float = 3e-4,
             lr_alpha: float = 3e-4,
-            repeat: int = 1000,
+            repeat: int = 1,
             init_alpha=1.0,
             optimizer=torch.optim.Adam
     ):
@@ -67,7 +67,7 @@ class SAC(Trainer):
             q_target = torch.min(q1_target, q2_target)
             soft_values_target = q_target - alpha * log_probs_next
             td_target = rewards + ~dones * self.gamma * soft_values_target
-        q1, q2 = self.policy.q.forward(observations, torch.tanh(actions))
+        q1, q2 = self.policy.q.forward(observations, actions)
         td_error1 = 0.5 * torch.square(td_target - q1).mean()
         td_error2 = 0.5 * torch.square(td_target - q2).mean()
         return td_error1, td_error2

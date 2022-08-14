@@ -2,7 +2,6 @@ from typing import Optional, List
 
 import torch
 import torch.nn as nn
-
 from pbrl.policy.base import Mlp, Cnn, Rnn, Deterministic
 
 
@@ -59,7 +58,7 @@ class DoubleQ(nn.Module):
         self.q2 = Deterministic(self.hidden_size, 1)
 
     def forward(self, observations, actions):
-        x = torch.cat((observations, actions), dim=1)
+        x = torch.cat((observations, actions), dim=-1)
         x1 = self.f1(x)
         q1 = self.q1(x1).squeeze(-1)
 

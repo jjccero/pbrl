@@ -3,7 +3,6 @@ from typing import Callable, Optional, Tuple, Any, List, Type
 import numpy as np
 import torch
 from gym.spaces import Box, Discrete, Space
-
 from pbrl.common.rms import RunningMeanStd
 from pbrl.policy.wrapper import ActionWrapper, TanhWrapper, ClipWrapper
 
@@ -105,7 +104,6 @@ class BasePolicy:
                 self.rms_reward.update(returns)
                 returns[dones] = 0.0
             rewards = self.rms_reward.normalize(rewards)
-
         return rewards
 
     def wrap_actions(self, actions: np.ndarray):
@@ -121,10 +119,7 @@ class BasePolicy:
         elif self.rnn == 'gru':
             states_actor[:, i, :] = 0.
 
-    def random_action(
-            self,
-            env_num: int
-    ):
+    def random_action(self, env_num: int):
         if isinstance(self.action_space, Box):
             return np.random.uniform(-1.0, 1.0, size=(env_num, *self.action_space.shape))
         elif isinstance(self.action_space, Discrete):
