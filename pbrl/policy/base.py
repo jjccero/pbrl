@@ -3,7 +3,7 @@ import torch.nn as nn
 from torch.distributions import Normal, Categorical
 
 
-def init_weights(module: nn.Module, gain=1.414):
+def orthogonal_init(module: nn.Module, gain):
     for m in module.modules():
         if isinstance(m, (nn.Linear, nn.Conv2d)):
             torch.nn.init.zeros_(m.bias)

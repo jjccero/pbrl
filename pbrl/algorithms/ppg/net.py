@@ -2,7 +2,7 @@ from typing import Optional, List
 
 import torch
 from pbrl.algorithms.ppo.net import Actor
-from pbrl.policy.base import Deterministic, init_weights
+from pbrl.policy.base import Deterministic, orthogonal_init
 
 
 class AuxActor(Actor):
@@ -14,7 +14,8 @@ class AuxActor(Actor):
             activation,
             rnn: Optional[str],
             continuous: bool,
-            conditional_std: bool
+            conditional_std: bool,
+            orthogonal: bool
     ):
         super(AuxActor, self).__init__(
             obs_dim=obs_dim,
@@ -23,10 +24,12 @@ class AuxActor(Actor):
             activation=activation,
             rnn=rnn,
             continuous=continuous,
-            conditional_std=conditional_std
+            conditional_std=conditional_std,
+            orthogonal=orthogonal
         )
         self.value = Deterministic(self.hidden_size, 1)
-        init_weights(self.value, 1.0)
+        if orthogonal:
+            orthogonal_init(self.value, 1.0)
 
     def aux(self, observations, states=None, dones: Optional[torch.Tensor] = None):
         x = self.f(observations)

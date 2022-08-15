@@ -25,7 +25,6 @@ class Policy(PGPolicy):
             obs_clip: float = 10.0,
             reward_clip: float = 10.0,
             device=torch.device('cpu'),
-            conditional_std=True,
             deterministic=True,
             actor_type=Actor,
             critic_type=Critic,
@@ -49,7 +48,8 @@ class Policy(PGPolicy):
             obs_clip=obs_clip,
             reward_clip=reward_clip,
             device=device,
-            conditional_std=conditional_std,
+            conditional_std=True,
+            orthogonal=False,
             deterministic=deterministic,
             actor_type=actor_type,
             critic_type=critic_type

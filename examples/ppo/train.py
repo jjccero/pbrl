@@ -25,7 +25,7 @@ def main():
     parser.add_argument('--rnn', type=str, default=None)
     parser.add_argument('--env_num_test', type=int, default=2)
     parser.add_argument('--episode_num_test', type=int, default=10)
-    parser.add_argument('--timestep', type=int, default=3000000)
+    parser.add_argument('--timestep', type=int, default=1024000)
 
     parser.add_argument('--eps', type=float, default=0.2)
     parser.add_argument('--gamma', type=float, default=0.99)

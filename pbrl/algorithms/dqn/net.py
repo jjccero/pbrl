@@ -2,8 +2,7 @@ from typing import List, Optional
 
 import torch
 import torch.nn as nn
-
-from pbrl.policy.base import Mlp, Cnn, Deterministic, init_weights
+from pbrl.policy.base import Mlp, Cnn, Deterministic
 
 
 class QNet(nn.Module):
@@ -21,11 +20,9 @@ class QNet(nn.Module):
             self.f = Cnn(obs_dim, hidden_sizes, activation)
         else:
             self.f = Mlp(obs_dim, hidden_sizes, activation)
-        init_weights(self.f)
         self.rnn = rnn
         if self.rnn:
             self.f2 = Rnn(self.hidden_size, activation, self.rnn)
-            init_weights(self.f2)
         self.q = Deterministic(self.hidden_size, action_dim)
 
     def forward(self, observations, states=None, dones: Optional[torch.Tensor] = None):

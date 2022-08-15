@@ -23,6 +23,7 @@ class Policy(BasePolicy):
             reward_clip: float = 10.0,
             device=torch.device('cpu'),
             conditional_std=False,
+            orthogonal=True,
             deterministic=False,
             actor_type=Actor,
             critic_type=Critic
@@ -58,7 +59,8 @@ class Policy(BasePolicy):
             activation=self.activation,
             rnn=self.rnn,
             continuous=continuous,
-            conditional_std=conditional_std
+            conditional_std=conditional_std,
+            orthogonal=orthogonal
         ).to(self.device)
         self.actor.eval()
         if critic_type is not None:
@@ -66,7 +68,8 @@ class Policy(BasePolicy):
                 obs_dim=self.observation_space.shape,
                 hidden_sizes=self.hidden_sizes,
                 activation=self.activation,
-                rnn=self.rnn
+                rnn=self.rnn,
+                orthogonal=orthogonal
             ).to(self.device)
             self.critic.eval()
 

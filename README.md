@@ -39,15 +39,32 @@ python train.py --obs_norm --reward_norm --adv_norm --timestep 200000 --gae_lamb
 
 MuJoCo:
 
+PPG for Humanoid-v3
+```
+cd examples/ppg
+python train.py
+```
+
+PPO for Walker2d-v3
 ```
 cd examples/ppo
 python train.py --obs_norm --reward_norm --recompute_adv --lr_decay --subproc
 ```
 
+TD3 and SAC for HalfCheetah-v3
+```
+cd examples/td3
+python train.py
+```
+```
+cd examples/sac
+python train_sac2.py
+```
+
 Use Population Based Training:  
 `python pbt_train.py`
 
-Open a new terminal:  
+Open a new terminal (`./result` will be automatically created when the training starts):  
 `tensorboard --logdir result`
 
 Then you can access the training information by visiting http://localhost:6006/ in browser.
@@ -80,10 +97,9 @@ Then you can access the training information by visiting http://localhost:6006/ 
 * Generalized Advantage Estimation (GAE)
 * Observation Normalization and Reward Scaling (RunningMeanStd)
 
-### TD3 and SAC's Tricks
+### Off-policy algorithms' Tricks
 
-* Infinite MDPs (no time limit)
-* Deterministic Action
+* Infinite MDPs (`done_real = done & (episode_steps < max_episode_steps)`)
 
 ### Population Based Training (PBT)
 
