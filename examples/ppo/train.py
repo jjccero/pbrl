@@ -30,7 +30,6 @@ def main():
     parser.add_argument('--eps', type=float, default=0.2)
     parser.add_argument('--gamma', type=float, default=0.99)
     parser.add_argument('--gae_lambda', type=float, default=0.95)
-    parser.add_argument('--vf_coef', type=float, default=1.0)
     parser.add_argument('--entropy_coef', type=float, default=0.0)
     parser.add_argument('--repeat', type=int, default=10)
     parser.add_argument('--adv_norm', action='store_true')
@@ -44,18 +43,13 @@ def main():
     parser.add_argument('--weight_decay', type=float, default=0.0)
 
     args = parser.parse_args()
-
-    torch.manual_seed(args.seed)
-    np.random.seed(args.seed)
-
-    filename_log = 'result/{}-{}-{}'.format(args.env, args.seed, int(time.time()))
-    filename_policy = '{}/policy.pkl'.format(filename_log)
-
-    logger = Logger(filename_log)
     # define train and test environment
     env_class = SubProcVecEnv if args.subproc else DummyVecEnv
     env_train = env_class([lambda: gym.make(args.env) for _ in range(args.env_num)])
     env_test = DummyVecEnv([lambda: gym.make(args.env) for _ in range(args.env_num_test)])
+    # set seed
+    torch.manual_seed(args.seed)
+    np.random.seed(args.seed)
     env_train.seed(args.seed)
     env_test.seed(args.seed)
     # define policy
@@ -83,7 +77,6 @@ def main():
         weight_decay=args.weight_decay,
         grad_norm=args.grad_norm,
         entropy_coef=args.entropy_coef,
-        vf_coef=args.vf_coef,
         adv_norm=args.adv_norm,
         recompute_adv=args.recompute_adv
     )
@@ -94,11 +87,15 @@ def main():
             trainer.optimizer,
             lambda update: 1.0 - update / total_update
         )
-    if args.resume:
-        PPO.load(filename_policy, policy, trainer)
     # define train and test runner
     runner_train = Runner(env=env_train)
     runner_test = Runner(env=env_test)
+    filename_log = 'result/{}-{}-{}'.format(args.env, args.seed, int(time.time()))
+    filename_policy = '{}/policy.pkl'.format(filename_log)
+    logger = Logger(filename_log)
+    # load policy
+    if args.resume:
+        PPO.load(filename_policy, policy, trainer)
     trainer.learn(
         timestep=args.timestep,
         runner_train=runner_train,
@@ -109,7 +106,7 @@ def main():
         test_interval=args.test_interval,
         episode_test=args.episode_num_test
     )
-    # save result
+    # save policy
     trainer.save(filename_policy)
     print(filename_policy)
 

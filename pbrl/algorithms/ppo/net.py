@@ -32,10 +32,12 @@ class Actor(nn.Module):
         else:
             self.dist = Discrete(self.hidden_size, action_dim)
         if orthogonal:
-            orthogonal_init(self.f, 1.0)
+            orthogonal_init(self.f)
             if self.rnn:
-                orthogonal_init(self.f2, 1.0)
-            orthogonal_init(self.dist, 0.01)
+                orthogonal_init(self.f2)
+            orthogonal_init(self.dist)
+            if self.continuous:
+                self.dist.mean.weight.data.copy_(0.01 * self.dist.mean.weight.data)
 
     def forward(self, observations, states=None, dones: Optional[torch.Tensor] = None):
         x = self.f(observations)
@@ -65,10 +67,10 @@ class Critic(nn.Module):
             self.f2 = Rnn(self.hidden_size, activation)
         self.value = Deterministic(self.hidden_size, 1)
         if orthogonal:
-            orthogonal_init(self.f, 1.0)
+            orthogonal_init(self.f)
             if self.rnn:
-                orthogonal_init(self.f2, 1.0)
-            orthogonal_init(self.value, 1.0)
+                orthogonal_init(self.f2)
+            orthogonal_init(self.value)
 
     def forward(self, observations, states=None, dones: Optional[torch.Tensor] = None):
         x = self.f.forward(observations)

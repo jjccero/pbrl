@@ -29,7 +29,7 @@ class AuxActor(Actor):
         )
         self.value = Deterministic(self.hidden_size, 1)
         if orthogonal:
-            orthogonal_init(self.value, 1.0)
+            orthogonal_init(self.value)
 
     def aux(self, observations, states=None, dones: Optional[torch.Tensor] = None):
         x = self.f(observations)
