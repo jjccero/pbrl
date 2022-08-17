@@ -18,7 +18,6 @@ def main():
     parser.add_argument('--resume', action='store_true')
     parser.add_argument('--seed', type=int, default=0)
     parser.add_argument('--timestep', type=int, default=1024000)
-    parser.add_argument('--env_num_test', type=int, default=2)
     parser.add_argument('--episode_num_test', type=int, default=10)
 
     # PPO hyperparameters
@@ -30,10 +29,8 @@ def main():
     parser.add_argument('--eps', type=float, default=0.2)
     parser.add_argument('--gamma', type=float, default=0.99)
     parser.add_argument('--gae_lambda', type=float, default=0.95)
-    parser.add_argument('--entropy_coef', type=float, default=0.0)
     parser.add_argument('--obs_norm', action='store_true')
     parser.add_argument('--reward_norm', action='store_true')
-    parser.add_argument('--grad_norm', type=float, default=0.5)
     parser.add_argument('--lr', type=float, default=3e-4)
     # PPG hyperparameters
     parser.add_argument('--aux_batch_size', type=int, default=256)
@@ -55,7 +52,7 @@ def main():
     logger = Logger(filename_log)
     # define train and test environment
     env_train = DummyVecEnv([lambda: gym.make(args.env) for _ in range(args.env_num)])
-    env_test = DummyVecEnv([lambda: gym.make(args.env) for _ in range(args.env_num_test)])
+    env_test = DummyVecEnv([lambda: gym.make(args.env)])
     env_train.seed(args.seed)
     env_test.seed(args.seed)
     # define policy
@@ -81,8 +78,6 @@ def main():
         gamma=args.gamma,
         gae_lambda=args.gae_lambda,
         lr=args.lr,
-        grad_norm=args.grad_norm,
-        entropy_coef=args.entropy_coef,
         aux_batch_size=args.aux_batch_size,
         lr_aux=args.lr_aux,
         beta_clone=args.beta_clone,

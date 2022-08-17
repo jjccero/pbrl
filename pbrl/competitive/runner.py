@@ -11,7 +11,6 @@ def load_from_dict(policy, agent_dict):
     # load RunningMeanStd
     if policy.obs_norm:
         policy.rms_obs.load(agent_dict['rms_obs'])
-    policy.actor.eval()
 
 
 def load_from_dir(policy, filename_policy):
@@ -20,7 +19,7 @@ def load_from_dir(policy, filename_policy):
         self.load_from_dict(policy, pkl)
 
 
-class CompetitiveRunner:
+class OnPolicyCompetitiveRunner:
     def __init__(self, env: gym.Env, policies, collect_index=0, render=None, random_opponent=True):
         self.env = env
         self.agent_num = len(env.action_space.spaces)
@@ -114,6 +113,81 @@ class CompetitiveRunner:
             if (timestep_num and timestep >= timestep_num) or (episode_num and episode >= episode_num):
                 if update:
                     buffer.observations_next = np.expand_dims(self.observations[self.collect_index], 0)
+                break
+
+        return dict(
+            episode=episode,
+            timestep=timestep,
+            reward=episode_rewards,
+            info=episode_infos
+        )
+
+
+class OffPolicyCompetitiveRunner(OnPolicyCompetitiveRunner):
+    def run(
+            self,
+            policy,
+            buffer,
+            timestep_num=0,
+            episode_num=0
+    ):
+        timestep = 0
+        episode = 0
+        episode_rewards = []
+        episode_infos = []
+
+        update = buffer is not None
+
+        while True:
+            observations = None
+            actions: Optional[np.ndarray] = None
+            wrapped_actions = []
+            for i in range(self.agent_num):
+                policy = self.policies[i]
+                observation = np.expand_dims(self.observations[i], 0)
+                if self.collect_index == i and update:
+                    action, self.states_actor[i] = policy.step(
+                        observation,
+                        self.states_actor[i],
+                        random=False,
+                        env_num=1
+                    )
+                    actions = action
+                    observations = observation
+                else:
+                    action, self.states_actor[i] = policy.act(observation, self.states_actor[i])
+                wrapped_actions.append(policy.wrap_actions(np.squeeze(action)))
+            self.observations, rewards, dones, infos = self.env.step(wrapped_actions)
+            rewards = np.expand_dims(rewards[self.collect_index], 0)
+            dones = np.expand_dims(dones[self.collect_index], 0)
+
+            self.episode_rewards += rewards
+
+            if self.render is not None:
+                self.env.render()
+                time.sleep(self.render)
+
+            if update:
+                self.policies[self.collect_index].normalize_rewards(rewards, True, self.returns, dones)
+                # add to buffer
+                timestep += buffer.append(
+                    observations,
+                    actions,
+                    np.expand_dims(self.observations[self.collect_index], 0),
+                    rewards,
+                    dones
+                )
+            else:
+                timestep += 1
+
+            if dones[0]:
+                episode += 1
+                info = dict(res=infos[self.collect_index]['res'], opponent_id=self.opponent_id)
+                episode_infos.append(info)
+                episode_rewards.append(self.episode_rewards[0])
+                self.reset()
+
+            if (timestep_num and timestep >= timestep_num) or (episode_num and episode >= episode_num):
                 break
 
         return dict(

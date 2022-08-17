@@ -11,6 +11,13 @@
 Small, fast and <font color=#FF0000>reproducible</font> implementation of reinforcement learning algorithms.  
 Support [OpenAI Gym](https://gym.openai.com/) (Atari, [MuJoCo](http://www.mujoco.org/) and Box2D) and custom tasks.
 
+In general, the default hyperparameters of each algorithm are consistent with those in the original paper. PBRL provides
+default training scripts in the `./examples` folder. These scripts can change the hyperparameters of the algorithm by
+command line parameters.
+
+PBRL provides a base class for PBT so that developers can quickly implement asynchronous training of the model by
+rewriting the server and sub-process working functions.
+
 ### Installation
 
 Make sure your Conda environment is activated before installing following requirements:  
@@ -40,22 +47,26 @@ python train.py --obs_norm --reward_norm --adv_norm --gae_lambda 0.98 --repeat 4
 MuJoCo:
 
 PPG for Humanoid-v3
+
 ```
 cd examples/ppg
 python train.py
 ```
 
 PPO for Walker2d-v3
+
 ```
 cd examples/ppo
 python train.py --obs_norm --reward_norm --recompute_adv --lr_decay --subproc
 ```
 
 TD3 and SAC for HalfCheetah-v3
+
 ```
 cd examples/td3
 python train.py
 ```
+
 ```
 cd examples/sac
 python train_sac2.py
@@ -100,8 +111,17 @@ Then you can access the training information by visiting http://localhost:6006/ 
 ### Off-policy algorithms' Tricks
 
 * Infinite MDPs (`done_real = done & (episode_steps < max_episode_steps)`)
+* DistributionalReplayBuffer (A distributed experience replay buffer is implemented in the `pbrl.pbt` module, which
+  allows some off-policy algorithms to collect samples through sub processes.)
 
 ### Population Based Training (PBT)
+
+PBT implements communication between multiple processes by creating pipelines of multiple parent-child processes. This
+needs to pass the working function of the child process to the constructor of PBT. The parameters of the working
+function can be passed through the constructor of PBT, and then the run method of PBT executes the listening of the
+child process command. It is strongly recommended that PBT fix random seeds after instantiation. PBT can be inherited,
+and the run method is rewritten to handle the logic of the corresponding work functions, which means that some methods
+of PBT will not be used when unnecessary.
 
 * **_select()_** Ranked by mean episodic rewards. Agents in the bottom 20% copy the top 20%.
 * **_explore()_** Each hyperparameter is randomly perturbed by a factor of 1.2 or 0.8.
@@ -119,6 +139,9 @@ python train.py --env RnnTest-v0 --chunk_len 8 --rnn gru --gamma 0.0 --lr 1e-3 -
 * Because of the state memory unit, RNN based RL algorithms can reach the goal of 100.0.
 
 #### Multi-agent Environment
+
+The `pbrl.competitive` module provides the PBT class of 1v1 multi-agent game and the sample collectors (Runner)
+corresponding to the on-policy and off-policy algorithms respectively.
 
 The types of **_obs_**, **_reward_**, **_done_** and **_info_** should be tuples.
 

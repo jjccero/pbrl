@@ -30,6 +30,7 @@ class ReplayBuffer:
             )
         self.ptr = (self.ptr + env_num) % self.buffer_size
         self.len = min(self.len + env_num, self.buffer_size)
+        return env_num
 
     def sample(self, batch_size: int):
         indices = np.random.randint(self.len, size=batch_size)
