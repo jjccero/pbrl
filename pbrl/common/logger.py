@@ -38,6 +38,7 @@ class Logger:
         s = '{}'.format(global_step)
         for key, value in d.items():
             if 'info' in key:
+                value.clear()
                 continue
             if len(value) == 0:
                 continue
