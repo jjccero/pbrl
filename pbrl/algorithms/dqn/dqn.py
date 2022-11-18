@@ -86,11 +86,13 @@ class DQN(Trainer):
 
     def update(self):
         loss_info = dict(td=[])
+        self.policy.critic.train()
 
         for _ in range(self.repeat):
             self.iteration += 1
             self.train_loop(loss_info)
 
+        self.policy.critic.eval()
         self.run_scheduler(loss_info)
         return loss_info
 

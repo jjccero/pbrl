@@ -34,7 +34,7 @@ class ReplayBuffer:
 
     def sample(self, batch_size: int):
         indices = np.random.randint(self.len, size=batch_size)
-        # sampling with replacement may take more time
+        # sampling without replacement may take more time
         # indices = np.random.choice(self.len, size=batch_size, replace=False)
         return merge_map(np.asarray, self.data[indices])
 

@@ -87,6 +87,8 @@ class TD3(Trainer):
         return td_error1, td_error2
 
     def train_loop(self, loss_info):
+        self.policy.critic.train()
+
         observations, actions, observations_next, rewards, dones = self.buffer.sample(self.batch_size)
         observations = self.policy.normalize_observations(observations)
         observations_next = self.policy.normalize_observations(observations_next)
@@ -102,13 +104,17 @@ class TD3(Trainer):
         critic_loss.backward()
         self.optimizer_critic.step()
 
+        self.policy.critic.eval()
         if self.iteration % self.policy_freq == 0:
+            self.policy.actor.train()
+
             policy_loss = self.policy_loss(observations)
             actor_loss = -policy_loss
             self.optimizer_actor.zero_grad()
             actor_loss.backward()
             self.optimizer_actor.step()
 
+            self.policy.actor.eval()
             Trainer.soft_update(self.policy.critic, self.policy.critic_target, self.tau)
             Trainer.soft_update(self.policy.actor, self.policy.actor_target, self.tau)
 
