@@ -2,9 +2,7 @@ import os
 from typing import Optional
 
 import torch
-
 from pbrl.algorithms.dqn.buffer import ReplayBuffer
-from pbrl.algorithms.dqn.policy import Policy
 from pbrl.algorithms.trainer import Trainer
 from pbrl.common.map import auto_map
 
@@ -12,7 +10,7 @@ from pbrl.common.map import auto_map
 class DQN(Trainer):
     def __init__(
             self,
-            policy: Policy,
+            policy,
             buffer_size: int = 20000,
             batch_size: int = 64,
             gamma: float = 0.99,
@@ -21,12 +19,13 @@ class DQN(Trainer):
             lr_critic: float = 1e-3,
             reward_scale: Optional[float] = None,
             optimizer=torch.optim.Adam,
-            epsilon_scheduler=None
+            epsilon_scheduler=None,
+            buffer=None
     ):
         super(DQN, self).__init__()
         self.policy = policy
         self.batch_size = batch_size
-        self.buffer = ReplayBuffer(buffer_size=buffer_size)
+        self.buffer = ReplayBuffer(buffer_size=buffer_size) if buffer is None else buffer
         self.gamma = gamma
         self.repeat = repeat
         self.target_freq = target_freq
@@ -109,7 +108,7 @@ class DQN(Trainer):
         torch.save(pkl, filename)
 
     @staticmethod
-    def load(filename: str, policy: Policy, trainer=None):
+    def load(filename: str, policy, trainer=None):
         if os.path.exists(filename):
             pkl = torch.load(filename, map_location=policy.device)
             policy.critic.load_state_dict(pkl['critic'])

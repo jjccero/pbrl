@@ -3,9 +3,7 @@ from typing import Tuple, Optional
 
 import numpy as np
 import torch
-
 from pbrl.algorithms.ppo.buffer import PGBuffer
-from pbrl.algorithms.ppo.policy import Policy
 from pbrl.algorithms.trainer import Trainer
 from pbrl.common.map import auto_map
 
@@ -13,7 +11,7 @@ from pbrl.common.map import auto_map
 class PPO(Trainer):
     def __init__(
             self,
-            policy: Policy,
+            policy,
             batch_size: int = 64,
             chunk_len: int = 0,
             eps: float = 0.2,
@@ -27,12 +25,13 @@ class PPO(Trainer):
             vf_coef: float = 1.0,
             adv_norm: bool = True,
             recompute_adv: bool = False,
-            optimizer=torch.optim.Adam
+            optimizer=torch.optim.Adam,
+            buffer=None
     ):
         super(PPO, self).__init__()
         self.policy = policy
         # on-policy buffer for ppo
-        self.buffer = PGBuffer()
+        self.buffer = PGBuffer() if buffer is None else buffer
         self.batch_size = batch_size
         self.chunk_len = chunk_len
         self.eps = eps
@@ -187,7 +186,7 @@ class PPO(Trainer):
         torch.save(pkl, filename)
 
     @staticmethod
-    def load(filename: str, policy: Policy, trainer=None):
+    def load(filename: str, policy, trainer=None):
         if os.path.exists(filename):
             pkl = torch.load(filename, map_location=policy.device)
             policy.actor.load_state_dict(pkl['actor'])

@@ -2,13 +2,11 @@ import time
 from typing import Optional
 
 import numpy as np
-from pbrl.algorithms.ppo.buffer import PGBuffer
-from pbrl.algorithms.ppo.policy import Policy
 from pbrl.algorithms.runner import BaseRunner
 
 
 class Runner(BaseRunner):
-    def run(self, policy: Policy, buffer: Optional[PGBuffer] = None, timestep_num=0, episode_num=0):
+    def run(self, policy, buffer=None, timestep_num=0, episode_num=0):
         timestep = 0
         episode = 0
         episode_rewards = []

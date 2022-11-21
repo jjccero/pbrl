@@ -27,7 +27,7 @@ class SAC(Trainer):
         super(SAC, self).__init__()
         self.policy = policy
         self.batch_size = batch_size
-        self.buffer = ReplayBuffer(buffer_size=buffer_size)
+        self.buffer = ReplayBuffer(buffer_size=buffer_size) if buffer is None else buffer
         self.gamma = gamma
         self.target_freq = target_freq
         self.tau = tau

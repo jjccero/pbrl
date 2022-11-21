@@ -2,11 +2,8 @@ import time
 from typing import Optional
 
 import numpy as np
-
-from pbrl.algorithms.dqn.buffer import ReplayBuffer
 from pbrl.algorithms.runner import BaseRunner
 from pbrl.env.env import VectorEnv
-from pbrl.policy.policy import BasePolicy
 
 
 class Runner(BaseRunner):
@@ -24,7 +21,7 @@ class Runner(BaseRunner):
         )
         self.start_timestep = start_timestep
 
-    def run(self, policy: BasePolicy, buffer: Optional[ReplayBuffer] = None, timestep_num=0, episode_num=0):
+    def run(self, policy, buffer=None, timestep_num=0, episode_num=0):
         timestep = 0
         episode = 0
         episode_rewards = []

@@ -2,17 +2,16 @@ from typing import Optional
 
 import numpy as np
 import torch
-from torch.distributions import Normal, Categorical
-
 from pbrl.algorithms.ppg.aux_buffer import AuxBuffer
-from pbrl.algorithms.ppo import PPO, Policy
+from pbrl.algorithms.ppo import PPO
 from pbrl.common.map import auto_map
+from torch.distributions import Normal, Categorical
 
 
 class PPG(PPO):
     def __init__(
             self,
-            policy: Optional[Policy] = None,
+            policy,
             batch_size: int = 64,
             chunk_len: Optional[int] = None,
             eps: float = 0.2,
@@ -29,7 +28,9 @@ class PPG(PPO):
             epoch_vf: int = 1,
             epoch_aux: int = 6,
             beta_clone: float = 1.0,
-            lr_aux: float = 5e-4
+            lr_aux: float = 5e-4,
+            buffer=None,
+            aux_buffer=None
     ):
         super(PPG, self).__init__(
             policy=policy,
@@ -45,7 +46,8 @@ class PPG(PPO):
             entropy_coef=entropy_coef,
             adv_norm=True,
             recompute_adv=False,
-            optimizer=optimizer
+            optimizer=optimizer,
+            buffer=buffer
         )
         self.aux_batch_size = aux_batch_size
         self.n_pi = n_pi
@@ -61,7 +63,7 @@ class PPG(PPO):
             ),
             lr=self.lr_aux
         )
-        self.aux_buffer = AuxBuffer()
+        self.aux_buffer = AuxBuffer() if aux_buffer is None else aux_buffer
         self.ks_vf = ['observations', 'returns']
         self.ks_pi = ['observations', 'actions', 'advantages', 'log_probs_old']
         self.ks_aux = ['observations', 'vtargs', 'dists_old']

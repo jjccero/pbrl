@@ -2,7 +2,6 @@ import os
 
 import torch
 from pbrl.algorithms.dqn.buffer import ReplayBuffer
-from pbrl.algorithms.td3.policy import Policy
 from pbrl.algorithms.trainer import Trainer
 from pbrl.common.map import auto_map
 
@@ -10,7 +9,7 @@ from pbrl.common.map import auto_map
 class TD3(Trainer):
     def __init__(
             self,
-            policy: Policy,
+            policy,
             buffer_size: int = 1000000,
             batch_size: int = 256,
             gamma: float = 0.99,
@@ -29,7 +28,7 @@ class TD3(Trainer):
         super(TD3, self).__init__()
         self.policy = policy
         self.batch_size = batch_size
-        self.buffer = ReplayBuffer(buffer_size=buffer_size)
+        self.buffer = ReplayBuffer(buffer_size=buffer_size) if buffer is None else buffer
         self.gamma = gamma
         self.noise_target = noise_target
         self.noise_clip = noise_clip
@@ -157,7 +156,7 @@ class TD3(Trainer):
         torch.save(pkl, filename)
 
     @staticmethod
-    def load(filename: str, policy: Policy, trainer=None):
+    def load(filename: str, policy, trainer=None):
         if os.path.exists(filename):
             pkl = torch.load(filename, map_location=policy.device)
             policy.actor.load_state_dict(pkl['actor'])
