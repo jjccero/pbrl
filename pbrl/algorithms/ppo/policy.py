@@ -50,7 +50,7 @@ class Policy(BasePolicy):
             continuous = False
             action_dim = self.action_space.n
         else:
-            raise not NotImplementedError('Neither Box or Discrete!')
+            raise NotImplementedError
 
         self.actor = actor_type(
             obs_dim=self.observation_space.shape,
