@@ -146,21 +146,5 @@ python train.py --env RnnTest-v0 --chunk_len 8 --rnn gru --gamma 0.0 --lr 1e-3 -
 * General RL algorithms will achieve an average reward of 55.5.
 * Because of the state memory unit, RNN based RL algorithms can reach the goal of 100.0.
 
-#### Multi-agent Environment
-
-The `pbrl.competitive` module provides the PBT class of 1v1 multi-agent game and the sample collectors (Runner)
-corresponding to the on-policy and off-policy algorithms respectively.
-
-The types of **_obs_**, **_reward_**, **_done_** and **_info_** should be tuples. The following is an example of tuple
-type `action_space` or `observation_space`.
-
-```
->>> import numpy as np
->>> from gym.spaces import Box, Tuple
->>> Tuple([Discrete(3), Box(-np.inf, np.inf, (2,))])
-Tuple(Discrete(3), Box([-inf -inf], [inf inf], (2,), float32))
->>> 
-```
-
 ---
 *2021, ICCD Lab, Dalian University of Technology. Author: Jingcheng Jiang.*  

@@ -1,11 +1,8 @@
 from multiprocessing.connection import Connection
 
-from pbrl.algorithms.dqn.buffer import ReplayBuffer
 
-
-class DistReplayBuffer(ReplayBuffer):
+class DistReplayBuffer:
     def __init__(self, remote: Connection):
-        super(DistReplayBuffer, self).__init__(buffer_size=0)
         self.remote = remote
 
     def append(
