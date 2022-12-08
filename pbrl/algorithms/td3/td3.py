@@ -23,7 +23,8 @@ class TD3(Trainer):
             tau: float = 0.005,
             lr_actor: float = 3e-4,
             lr_critic: float = 3e-4,
-            optimizer=torch.optim.Adam
+            optimizer=torch.optim.Adam,
+            buffer=None
     ):
         super(TD3, self).__init__()
         self.policy = policy

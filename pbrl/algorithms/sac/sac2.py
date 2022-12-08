@@ -22,7 +22,8 @@ class SAC(Trainer):
             lr_alpha: float = 3e-4,
             repeat: int = 1,
             init_alpha=1.0,
-            optimizer=torch.optim.Adam
+            optimizer=torch.optim.Adam,
+            buffer=None
     ):
         super(SAC, self).__init__()
         self.policy = policy

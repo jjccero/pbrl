@@ -22,7 +22,8 @@ class SAC(Trainer):
             lr_q: float = 3e-4,
             repeat: int = 1,
             reward_scale: Optional[float] = None,
-            optimizer=torch.optim.Adam
+            optimizer=torch.optim.Adam,
+            buffer=None
     ):
         super(SAC, self).__init__()
         self.policy = policy
