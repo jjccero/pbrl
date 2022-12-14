@@ -4,6 +4,7 @@ import time
 import gym
 import numpy as np
 import torch
+
 from pbrl.algorithms.ppo import PPO, Runner, Policy
 from pbrl.common import Logger
 from pbrl.env import SubProcVecEnv, DummyVecEnv
@@ -83,10 +84,19 @@ def main():
     # lr scheduler
     if args.lr_decay:
         total_update = args.timestep / args.buffer_size
-        trainer.scheduler = torch.optim.lr_scheduler.LambdaLR(
+        lr_scheduler = torch.optim.lr_scheduler.LambdaLR(
             trainer.optimizer,
             lambda update: 1.0 - update / total_update
         )
+
+        def scheduler(t):
+            lr_scheduler.step()
+            return {
+                'train/lr': lr_scheduler.get_last_lr()
+            }
+
+        trainer.scheduler = scheduler
+
     # define train and test runner
     runner_train = Runner(env=env_train)
     runner_test = Runner(env=env_test)

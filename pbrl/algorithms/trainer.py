@@ -12,7 +12,7 @@ class Trainer:
         self.buffer = None
         self.timestep = 0
         self.iteration = 0
-        self.scheduler: Optional[torch.optim.lr_scheduler.LambdaLR] = None
+        self.scheduler = None
 
     @staticmethod
     def soft_update(net: torch.nn.Module, net_target: torch.nn.Module, tau: float):
@@ -50,9 +50,9 @@ class Trainer:
             self.timestep += train_info['timestep']
             loss_info = self.update()
             update_dict(info, loss_info, 'loss/')
-            if self.scheduler:
-                self.scheduler.step()
-                train_info['lr'] = self.scheduler.get_last_lr()
+            if self.scheduler is not None:
+                schedule_info = self.scheduler(self)
+                update_dict(info, schedule_info)
             update_dict(info, train_info, 'train/')
             done = self.timestep >= target_timestep
 
