@@ -15,7 +15,7 @@ setup(
         'pyglet',
         'gym==0.19',
         'numpy>=1.19',
-        'cloudpickle',  # fn
+        'cloudpickle',
         'tensorboard',
         'tensorboardx',
         'torch>=1.7'
