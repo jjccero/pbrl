@@ -131,8 +131,6 @@ class TD3(Trainer):
         pkl = {
             'timestep': self.timestep,
             'iteration': self.iteration,
-            'lr_actor': self.lr_actor,
-            'lr_critic': self.lr_critic,
             'actor': {k: v.cpu() for k, v in self.policy.actor.state_dict().items()},
             'critic': {k: v.cpu() for k, v in self.policy.critic.state_dict().items()},
             'rms_obs': self.policy.rms_obs,
@@ -158,7 +156,5 @@ class TD3(Trainer):
             if trainer:
                 trainer.timestep = pkl['timestep']
                 trainer.iteration = pkl['iteration']
-                trainer.lr_actor = pkl['lr_actor']
-                trainer.lr_critic = pkl['lr_critic']
                 trainer.optimizer_actor.load_state_dict(pkl['optimizer_actor'])
                 trainer.optimizer_critic.load_state_dict(pkl['optimizer_critic'])

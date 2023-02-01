@@ -176,7 +176,6 @@ class PPO(Trainer):
         pkl = {
             'timestep': self.timestep,
             'iteration': self.iteration,
-            'lr': self.lr,
             'actor': {k: v.cpu() for k, v in self.policy.actor.state_dict().items()},
             'critic': {k: v.cpu() for k, v in self.policy.critic.state_dict().items()},
             'rms_obs': self.policy.rms_obs,
@@ -199,5 +198,4 @@ class PPO(Trainer):
             if trainer:
                 trainer.timestep = pkl['timestep']
                 trainer.iteration = pkl['iteration']
-                trainer.lr = pkl['lr']
                 trainer.optimizer.load_state_dict(pkl['optimizer'])

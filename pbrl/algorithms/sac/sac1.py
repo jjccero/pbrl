@@ -137,9 +137,6 @@ class SAC(Trainer):
         pkl = {
             'timestep': self.timestep,
             'iteration': self.iteration,
-            'lr_actor': self.lr_actor,
-            'lr_critic': self.lr_critic,
-            'lr_q': self.lr_q,
             'actor': {k: v.cpu() for k, v in self.policy.actor.state_dict().items()},
             'critic': {k: v.cpu() for k, v in self.policy.critic.state_dict().items()},
             'q': {k: v.cpu() for k, v in self.policy.q.state_dict().items()},
@@ -168,9 +165,6 @@ class SAC(Trainer):
             if trainer:
                 trainer.timestep = pkl['timestep']
                 trainer.iteration = pkl['iteration']
-                trainer.lr_actor = pkl['lr_actor']
-                trainer.lr_critic = pkl['lr_critic']
-                trainer.lr_q = pkl['lr_q']
                 trainer.optimizer_actor.load_state_dict(pkl['optimizer_actor'])
                 trainer.optimizer_critic.load_state_dict(pkl['optimizer_critic'])
                 trainer.optimizer_q.load_state_dict(pkl['optimizer_q'])

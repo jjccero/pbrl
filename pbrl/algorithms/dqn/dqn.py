@@ -92,7 +92,6 @@ class DQN(Trainer):
         pkl = {
             'timestep': self.timestep,
             'iteration': self.iteration,
-            'lr_critic': self.lr_critic,
             'critic': {k: v.cpu() for k, v in self.policy.critic.state_dict().items()},
             'rms_obs': self.policy.rms_obs,
             'rms_reward': self.policy.rms_reward,
@@ -114,5 +113,4 @@ class DQN(Trainer):
             if trainer:
                 trainer.timestep = pkl['timestep']
                 trainer.iteration = pkl['iteration']
-                trainer.lr_critic = pkl['lr_critic']
                 trainer.optimizer_critic.load_state_dict(pkl['optimizer_critic'])

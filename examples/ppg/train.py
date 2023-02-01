@@ -15,7 +15,6 @@ def main():
     parser.add_argument('--env', type=str, default='Humanoid-v3')
     parser.add_argument('--test_interval', type=int, default=20480)
     parser.add_argument('--log_interval', type=int, default=20480)
-    parser.add_argument('--resume', action='store_true')
     parser.add_argument('--seed', type=int, default=0)
     parser.add_argument('--timestep', type=int, default=1024000)
     parser.add_argument('--episode_num_test', type=int, default=10)
