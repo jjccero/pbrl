@@ -22,7 +22,7 @@ def test(runner_test, policy, episode_num_test, info):
 
 
 def worker_fn(
-        worker_num: int, worker_id: int, remote: Connection, remote_parent: Connection,
+        worker_num: int, worker_id: int, remote: Connection,
         trainer_config: dict,
         policy_config: dict,
         env,
@@ -36,7 +36,6 @@ def worker_fn(
         episode_num_test,
         log_dir: str
 ):
-    remote_parent.close()
 
     seed_worker = seed + worker_id
     torch.manual_seed(seed_worker)
@@ -154,10 +153,21 @@ def main():
     )
     pbt = PBT(
         worker_fn=worker_fn,
-        policy_config=policy_config,
-        trainer_config=trainer_config,
-        log_dir='result/{}/{}-{}'.format(args.env, args.seed, int(time.time())),
-        **vars(args)
+        worker_num=args.worker_num,
+        worker_parms=dict(
+            policy_config=policy_config,
+            trainer_config=trainer_config,
+            log_dir='result/{}/{}-{}'.format(args.env, args.seed, int(time.time())),
+            env=args.env,
+            seed=args.seed,
+            env_num=args.env_num,
+            env_num_test=args.env_num_test,
+            timestep=args.timestep,
+            ready_timestep=args.ready_timestep,
+            log_interval=args.log_interval,
+            buffer_size=args.buffer_size,
+            episode_num_test=args.episode_num_test
+        )
     )
     pbt.seed(args.seed)
     pbt.run()

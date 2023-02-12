@@ -1,4 +1,3 @@
-import gym.spaces
 import torch
 
 
@@ -26,12 +25,3 @@ def map_cpu(e):
     if isinstance(e, torch.Tensor):
         return e.cpu()
     return e
-
-
-def map_space(f, x):
-    if isinstance(x, gym.spaces.Dict):
-        return {k: map_space(f, v) for k, v in x.spaces.items()}
-    elif isinstance(x, gym.spaces.Tuple):
-        return tuple(map_space(f, e) for e in x.spaces)
-    else:
-        return f(x)

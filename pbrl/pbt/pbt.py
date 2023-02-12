@@ -1,9 +1,8 @@
 import logging
 import multiprocessing
-from multiprocessing.connection import Connection
-from typing import List, Callable
 
 import numpy as np
+
 from pbrl.pbt.data import Data
 
 
@@ -11,16 +10,15 @@ class PBT:
     def __init__(
             self,
             worker_num: int,
-            worker_fn: Callable,
-            exploit=True,
-            **kwargs
+            worker_fn: callable,
+            worker_parms: dict,
+            exploit=True
     ):
-        assert worker_num > 0
         self.worker_num = worker_num
-        self.remotes: List[Connection] = []
-        self.ps = []
+        self.remotes = []
+        self.processes = []
         self.closed = False
-        self.datas: List[Data] = []
+        self.datas = []
         self.objs = []
         ctx = multiprocessing.get_context('spawn')
         for worker_id in range(self.worker_num):
@@ -32,13 +30,12 @@ class PBT:
                     worker_num,
                     worker_id,
                     remote_worker,
-                    remote
                 ),
-                kwargs=kwargs,
+                kwargs=worker_parms,
                 daemon=False
             )
             p.start()
-            self.ps.append(p)
+            self.processes.append(p)
             self.datas.append(Data(worker_id))
             remote_worker.close()
         self.exploit = exploit
@@ -93,7 +90,7 @@ class PBT:
         self.datas.clear()
         self.objs.clear()
         for worker_id in range(self.worker_num):
-            self.ps[worker_id].join()
+            self.processes[worker_id].join()
 
     def run(self):
         while True:
