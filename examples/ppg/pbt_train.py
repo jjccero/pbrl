@@ -154,7 +154,7 @@ def main():
     pbt = PBT(
         worker_fn=worker_fn,
         worker_num=args.worker_num,
-        worker_parms=dict(
+        worker_params=dict(
             policy_config=policy_config,
             trainer_config=trainer_config,
             log_dir='result/{}/{}-{}'.format(args.env, args.seed, int(time.time())),

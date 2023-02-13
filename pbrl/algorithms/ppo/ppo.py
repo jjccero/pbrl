@@ -3,9 +3,10 @@ from typing import Tuple, Optional
 
 import numpy as np
 import torch
+
 from pbrl.algorithms.ppo.buffer import PGBuffer
 from pbrl.algorithms.trainer import Trainer
-from pbrl.common.map import auto_map
+from pbrl.common.map import auto_map, map_cpu
 
 
 class PPO(Trainer):
@@ -176,13 +177,13 @@ class PPO(Trainer):
         pkl = {
             'timestep': self.timestep,
             'iteration': self.iteration,
-            'actor': {k: v.cpu() for k, v in self.policy.actor.state_dict().items()},
-            'critic': {k: v.cpu() for k, v in self.policy.critic.state_dict().items()},
+            'actor': self.policy.actor.state_dict(),
+            'critic': self.policy.critic.state_dict(),
             'rms_obs': self.policy.rms_obs,
             'rms_reward': self.policy.rms_reward,
             'optimizer': self.optimizer.state_dict()
         }
-        torch.save(pkl, filename)
+        torch.save(auto_map(map_cpu, pkl), filename)
 
     @staticmethod
     def load(filename: str, policy, trainer=None):

@@ -5,7 +5,7 @@ import torch
 from pbrl.algorithms.dqn.buffer import ReplayBuffer
 from pbrl.algorithms.sac.policy import Policy
 from pbrl.algorithms.trainer import Trainer
-from pbrl.common.map import auto_map
+from pbrl.common.map import auto_map, map_cpu
 
 
 class SAC(Trainer):
@@ -136,14 +136,14 @@ class SAC(Trainer):
             'timestep': self.timestep,
             'iteration': self.iteration,
             'log_alpha': self.log_alpha.item(),
-            'actor': {k: v.cpu() for k, v in self.policy.actor.state_dict().items()},
-            'q': {k: v.cpu() for k, v in self.policy.q.state_dict().items()},
+            'actor': self.policy.actor.state_dict(),
+            'q': self.policy.q.state_dict(),
             'rms_obs': self.policy.rms_obs,
             'rms_reward': self.policy.rms_reward,
             'optimizer_actor': self.optimizer_actor.state_dict(),
             'optimizer_q': self.optimizer_q.state_dict()
         }
-        torch.save(pkl, filename)
+        torch.save(auto_map(map_cpu, pkl), filename)
 
     @staticmethod
     def load(filename: str, policy: Policy, trainer=None):

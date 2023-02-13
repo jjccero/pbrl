@@ -53,7 +53,7 @@ class Logger:
                     s += ', {}: {:.2f}+{:.2f}'.format(key, scalar_value, scalar_value_std)
                 else:
                     scalar_value = value[0]
-                    s += ', {}: {}'.format(key, scalar_value)
+                    s += ', {}: {:.2f}'.format(key, scalar_value)
 
             if self.writer is not None:
                 self.writer.add_scalar(

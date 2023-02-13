@@ -16,7 +16,7 @@ def main():
     parser.add_argument('--test_interval', type=int, default=20480)
     parser.add_argument('--log_interval', type=int, default=20480)
     parser.add_argument('--subproc', action='store_true')
-    parser.add_argument('--resume', action='store_true')
+    parser.add_argument('--resume_filename', type=str, default=None)
     parser.add_argument('--seed', type=int, default=0)
 
     parser.add_argument('--env_num', type=int, default=16)
@@ -38,6 +38,7 @@ def main():
     parser.add_argument('--obs_norm', action='store_true')
     parser.add_argument('--reward_norm', action='store_true')
     parser.add_argument('--lr_decay', action='store_true')
+    parser.add_argument('--deterministic', action='store_true')
 
     parser.add_argument('--lr', type=float, default=3e-4)
     parser.add_argument('--grad_norm', type=float, default=0.5)
@@ -63,6 +64,7 @@ def main():
         obs_norm=args.obs_norm,
         reward_norm=args.reward_norm,
         gamma=args.gamma,
+        deterministic=args.deterministic,
         device=torch.device('cuda:0') if torch.cuda.is_available() else torch.device('cpu')
     )
     # define trainer for the task
@@ -104,8 +106,8 @@ def main():
     filename_policy = '{}/policy.pkl'.format(filename_log)
     logger = Logger(filename_log)
     # load policy
-    if args.resume:
-        PPO.load(filename_policy, policy, trainer)
+    if args.resume_filename is not None:
+        PPO.load(args.resume_filename, policy, trainer)
     trainer.learn(
         timestep=args.timestep,
         runner_train=runner_train,

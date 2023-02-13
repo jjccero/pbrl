@@ -2,7 +2,7 @@ from typing import Optional
 
 import torch
 
-from pbrl.common.logger import update_dict, Logger
+from pbrl.common.logger import update_dict
 from pbrl.policy.policy import BasePolicy
 
 
@@ -27,9 +27,9 @@ class Trainer:
             timestep: int,
             runner_train,
             timestep_update: int,
-            logger: Optional[Logger] = None,
+            logger=None,
             log_interval=0,
-            runner_test: Optional = None,
+            runner_test=None,
             test_interval=0,
             episode_test=0
     ):
@@ -46,14 +46,17 @@ class Trainer:
             logger.log(self.timestep, info)
 
         while True:
-            train_info = runner_train.run(policy=self.policy, buffer=self.buffer, timestep_num=timestep_update)
-            self.timestep += train_info['timestep']
-            loss_info = self.update()
-            update_dict(info, loss_info, 'loss/')
             if self.scheduler is not None:
                 schedule_info = self.scheduler(self)
                 update_dict(info, schedule_info)
+
+            train_info = runner_train.run(policy=self.policy, buffer=self.buffer, timestep_num=timestep_update)
             update_dict(info, train_info, 'train/')
+            self.timestep += train_info['timestep']
+
+            loss_info = self.update()
+            update_dict(info, loss_info, 'loss/')
+
             done = self.timestep >= target_timestep
 
             if test_interval and (self.timestep % test_interval == 0 or done):

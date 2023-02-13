@@ -1,9 +1,10 @@
 import os
 
 import torch
+
 from pbrl.algorithms.dqn.buffer import ReplayBuffer
 from pbrl.algorithms.trainer import Trainer
-from pbrl.common.map import auto_map
+from pbrl.common.map import auto_map, map_cpu
 
 
 class TD3(Trainer):
@@ -131,14 +132,14 @@ class TD3(Trainer):
         pkl = {
             'timestep': self.timestep,
             'iteration': self.iteration,
-            'actor': {k: v.cpu() for k, v in self.policy.actor.state_dict().items()},
-            'critic': {k: v.cpu() for k, v in self.policy.critic.state_dict().items()},
+            'actor': self.policy.actor.state_dict(),
+            'critic': self.policy.critic.state_dict(),
             'rms_obs': self.policy.rms_obs,
             'rms_reward': self.policy.rms_reward,
             'optimizer_actor': self.optimizer_actor.state_dict(),
             'optimizer_critic': self.optimizer_critic.state_dict()
         }
-        torch.save(pkl, filename)
+        torch.save(auto_map(map_cpu, pkl), filename)
 
     @staticmethod
     def load(filename: str, policy, trainer=None):

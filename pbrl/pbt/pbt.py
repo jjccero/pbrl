@@ -3,6 +3,7 @@ import multiprocessing
 
 import numpy as np
 
+from pbrl.common import Logger
 from pbrl.pbt.data import Data
 
 
@@ -11,7 +12,8 @@ class PBT:
             self,
             worker_num: int,
             worker_fn: callable,
-            worker_parms: dict,
+            worker_params: dict,
+            log_dir=None,
             exploit=True
     ):
         self.worker_num = worker_num
@@ -29,9 +31,10 @@ class PBT:
                 args=(
                     worker_num,
                     worker_id,
+                    log_dir,
                     remote_worker,
                 ),
-                kwargs=worker_parms,
+                kwargs=worker_params,
                 daemon=False
             )
             p.start()
@@ -39,6 +42,8 @@ class PBT:
             self.datas.append(Data(worker_id))
             remote_worker.close()
         self.exploit = exploit
+        self.log_dir = log_dir
+        self.logger = Logger(log_dir) if log_dir is not None else None
         self.random_state = np.random.RandomState()
 
     def select(self):
