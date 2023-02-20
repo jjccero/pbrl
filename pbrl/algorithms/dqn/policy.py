@@ -88,3 +88,14 @@ class Policy(BasePolicy):
         actions = torch.argmax(q_values, -1)
         actions = self.t2n(actions)
         return actions, states_actor
+
+    def to_pkl(self):
+        pkl = super(Policy, self).to_pkl()
+        pkl['critic'] = auto_map(map_cpu, self.critic.state_dict())
+        return pkl
+
+    def from_pkl(self, pkl):
+        super(Policy, self).from_pkl(pkl)
+        self.critic.load_state_dict(pkl['critic'])
+        if self.critic_target:
+            self.critic_target.load_state_dict(pkl['critic'])

@@ -3,6 +3,7 @@ from typing import Callable, Optional, Tuple, Any, List, Type
 import numpy as np
 import torch
 from gym.spaces import Box, Discrete, Space
+
 from pbrl.common.rms import RunningMeanStd
 from pbrl.policy.wrapper import ActionWrapper, TanhWrapper, ClipWrapper
 
@@ -126,3 +127,16 @@ class BasePolicy:
             return np.random.randint(self.action_space.n, size=env_num)
         else:
             raise NotImplementedError
+
+    def to_pkl(self):
+        pkl = {
+            'rms_obs': self.rms_obs,
+            'rms_reward': self.rms_reward
+        }
+        return pkl
+
+    def from_pkl(self, pkl):
+        if self.obs_norm:
+            self.rms_obs.load(pkl['rms_obs'])
+        if self.reward_norm:
+            self.rms_reward.load(pkl['rms_reward'])

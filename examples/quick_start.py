@@ -32,7 +32,7 @@ def main(env='CartPole-v1', reward_threshold=495., seed=0):
     trainer = DQN(
         policy=policy,
         target_freq=10,
-        lr_critic=2.3e-3,
+        lr=2.3e-3,
         repeat=250
     )
     while True:

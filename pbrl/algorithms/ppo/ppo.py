@@ -1,4 +1,3 @@
-import os
 from typing import Tuple, Optional
 
 import numpy as np
@@ -173,30 +172,11 @@ class PPO(Trainer):
         self.buffer.clear()
         return loss_info
 
-    def save(self, filename: str):
-        pkl = {
-            'timestep': self.timestep,
-            'iteration': self.iteration,
-            'actor': self.policy.actor.state_dict(),
-            'critic': self.policy.critic.state_dict(),
-            'rms_obs': self.policy.rms_obs,
-            'rms_reward': self.policy.rms_reward,
-            'optimizer': self.optimizer.state_dict()
-        }
-        torch.save(auto_map(map_cpu, pkl), filename)
+    def to_pkl(self):
+        pkl = super(PPO, self).to_pkl()
+        pkl['optimizer'] = auto_map(map_cpu, self.optimizer.state_dict())
+        return pkl
 
-    @staticmethod
-    def load(filename: str, policy, trainer=None):
-        if os.path.exists(filename):
-            pkl = torch.load(filename, map_location=policy.device)
-            policy.actor.load_state_dict(pkl['actor'])
-            if policy.critic:
-                policy.critic.load_state_dict(pkl['critic'])
-            if policy.obs_norm:
-                policy.rms_obs.load(pkl['rms_obs'])
-            if policy.reward_norm:
-                policy.rms_reward.load(pkl['rms_reward'])
-            if trainer:
-                trainer.timestep = pkl['timestep']
-                trainer.iteration = pkl['iteration']
-                trainer.optimizer.load_state_dict(pkl['optimizer'])
+    def from_pkl(self, pkl):
+        super(PPO, self).from_pkl(pkl)
+        self.optimizer.load_state_dict(pkl['optimizer'])

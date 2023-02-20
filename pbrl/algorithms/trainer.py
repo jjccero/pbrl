@@ -1,3 +1,4 @@
+import os
 from typing import Optional
 
 import torch
@@ -68,3 +69,22 @@ class Trainer:
             if done:
                 break
         return info
+
+    def to_pkl(self):
+        pkl = self.policy.to_pkl()
+        return pkl
+
+    def from_pkl(self, pkl):
+        self.policy.from_pkl(pkl)
+
+    def save(self, filename: str):
+        torch.save(self.to_pkl(), filename)
+
+    @staticmethod
+    def load(filename: str, policy, trainer=None):
+        if os.path.exists(filename):
+            pkl = torch.load(filename, map_location=policy.device)
+            if trainer is not None:
+                trainer.from_pkl(pkl)
+            else:
+                policy.from_pkl(pkl)

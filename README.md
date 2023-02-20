@@ -20,7 +20,7 @@ rewriting the parent and child process working functions.
 
 ### Installation
 
-Ubantu is recommended.
+Ubuntu is recommended.
 
 Make sure your Conda environment is activated before installing following requirements:  
 [Pytorch](https://pytorch.org/)
@@ -52,7 +52,7 @@ PPG for Humanoid-v3
 
 ```
 cd examples/ppg
-python train.py
+python train.py --obs_norm --reward_norm
 ```
 
 Use Population Based Training:  
@@ -92,7 +92,6 @@ Then you can access the training information by visiting http://localhost:6006/ 
         * [ppo/](/pbrl/algorithms/ppo) Proximal Policy Optimization
         * [sac/](/pbrl/algorithms/sac) Soft Actor Critic
         * [td3/](/pbrl/algorithms/td3) Twin Delayed Deep Deterministic Policy Gradient
-    * [competitive/](/pbrl/competitive) Multi-agent support
     * [env/](/pbrl/env)
         * [env.py](/pbrl/env/env.py) wrapped vector environment
         * [test.py](/pbrl/env/test/rnn.py) test
@@ -113,7 +112,7 @@ Then you can access the training information by visiting http://localhost:6006/ 
 ### Off-policy algorithms' Tricks
 
 * Infinite MDPs (`done_real = done & (episode_steps < max_episode_steps)`)
-* DistributionalReplayBuffer (A distributed experience replay buffer is implemented in the `pbrl.pbt` module, which
+* DistributionalReplayBuffer (A distributed experience replay buffer is implemented in the `pbrl.algorithms.dqn.buffer` module, which
   allows some off-policy algorithms to collect samples through sub processes.)
 
 ### Population Based Training (PBT)

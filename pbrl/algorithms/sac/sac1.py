@@ -1,4 +1,3 @@
-import os
 from typing import Optional
 
 import torch
@@ -6,7 +5,7 @@ import torch
 from pbrl.algorithms.dqn.buffer import ReplayBuffer
 from pbrl.algorithms.sac.policy import Policy
 from pbrl.algorithms.trainer import Trainer
-from pbrl.common.map import auto_map
+from pbrl.common.map import auto_map, map_cpu
 
 
 class SAC(Trainer):
@@ -133,38 +132,15 @@ class SAC(Trainer):
         self.policy.actor.eval()
         return loss_info
 
-    def save(self, filename: str):
-        pkl = {
-            'timestep': self.timestep,
-            'iteration': self.iteration,
-            'actor': {k: v.cpu() for k, v in self.policy.actor.state_dict().items()},
-            'critic': {k: v.cpu() for k, v in self.policy.critic.state_dict().items()},
-            'q': {k: v.cpu() for k, v in self.policy.q.state_dict().items()},
-            'rms_obs': self.policy.rms_obs,
-            'rms_reward': self.policy.rms_reward,
-            'optimizer_actor': self.optimizer_actor.state_dict(),
-            'optimizer_critic': self.optimizer_critic.state_dict(),
-            'optimizer_q': self.optimizer_q.state_dict()
-        }
-        torch.save(pkl, filename)
+    def to_pkl(self):
+        pkl = super(SAC, self).to_pkl()
+        pkl['optimizer_actor'] = auto_map(map_cpu, self.optimizer_actor.state_dict())
+        pkl['optimizer_critic'] = auto_map(map_cpu, self.optimizer_critic.state_dict())
+        pkl['optimizer_q'] = auto_map(map_cpu, self.optimizer_q.state_dict())
+        return pkl
 
-    @staticmethod
-    def load(filename: str, policy: Policy, trainer=None):
-        if os.path.exists(filename):
-            pkl = torch.load(filename, map_location=policy.device)
-            policy.actor.load_state_dict(pkl['actor'])
-            if policy.critic:
-                policy.critic.load_state_dict(pkl['critic'])
-                policy.critic_target.load_state_dict(pkl['critic'])
-            if policy.q:
-                policy.q.load_state_dict(pkl['q'])
-            if policy.obs_norm:
-                policy.rms_obs.load(pkl['rms_obs'])
-            if policy.reward_norm:
-                policy.rms_reward.load(pkl['rms_reward'])
-            if trainer:
-                trainer.timestep = pkl['timestep']
-                trainer.iteration = pkl['iteration']
-                trainer.optimizer_actor.load_state_dict(pkl['optimizer_actor'])
-                trainer.optimizer_critic.load_state_dict(pkl['optimizer_critic'])
-                trainer.optimizer_q.load_state_dict(pkl['optimizer_q'])
+    def from_pkl(self, pkl):
+        super(SAC, self).from_pkl(pkl)
+        self.optimizer_actor.load_state_dict(pkl['optimizer_actor'])
+        self.optimizer_critic.load_state_dict(pkl['optimizer_critic'])
+        self.optimizer_q.load_state_dict(pkl['optimizer_q'])

@@ -1,11 +1,10 @@
-import os
 from typing import Optional
 
 import torch
 
 from pbrl.algorithms.dqn.buffer import ReplayBuffer
 from pbrl.algorithms.trainer import Trainer
-from pbrl.common.map import auto_map,map_cpu
+from pbrl.common.map import auto_map, map_cpu
 
 
 class DQN(Trainer):
@@ -17,7 +16,7 @@ class DQN(Trainer):
             gamma: float = 0.99,
             repeat: int = 1,
             target_freq: int = 10,
-            lr_critic: float = 1e-3,
+            lr: float = 1e-3,
             reward_scale: Optional[float] = None,
             optimizer=torch.optim.Adam,
             buffer=None
@@ -29,8 +28,8 @@ class DQN(Trainer):
         self.gamma = gamma
         self.repeat = repeat
         self.target_freq = target_freq
-        self.lr_critic = lr_critic
-        self.optimizer_critic = optimizer(
+        self.lr_critic = lr
+        self.optimizer = optimizer(
             self.policy.critic.parameters(),
             lr=self.lr_critic
         )
@@ -69,9 +68,9 @@ class DQN(Trainer):
 
         td_error = self.critic_loss(observations, actions, observations_next, rewards, dones)
 
-        self.optimizer_critic.zero_grad()
+        self.optimizer.zero_grad()
         td_error.backward()
-        self.optimizer_critic.step()
+        self.optimizer.step()
 
         if self.iteration % self.target_freq == 0:
             self.policy.critic_target.load_state_dict(self.policy.critic.state_dict())
@@ -88,29 +87,11 @@ class DQN(Trainer):
         self.policy.critic.eval()
         return loss_info
 
-    def save(self, filename: str):
-        pkl = {
-            'timestep': self.timestep,
-            'iteration': self.iteration,
-            'critic': self.policy.critic.state_dict(),
-            'rms_obs': self.policy.rms_obs,
-            'rms_reward': self.policy.rms_reward,
-            'optimizer_critic': self.optimizer_critic.state_dict()
-        }
-        torch.save(auto_map(map_cpu, pkl), filename)
+    def to_pkl(self):
+        super(DQN, self).to_pkl()
+        pkl['optimizer'] = auto_map(map_cpu, self.optimizer.state_dict())
+        return pkl
 
-    @staticmethod
-    def load(filename: str, policy, trainer=None):
-        if os.path.exists(filename):
-            pkl = torch.load(filename, map_location=policy.device)
-            policy.critic.load_state_dict(pkl['critic'])
-            if policy.critic:
-                policy.critic_target.load_state_dict(pkl['critic'])
-            if policy.obs_norm:
-                policy.rms_obs.load(pkl['rms_obs'])
-            if policy.reward_norm:
-                policy.rms_reward.load(pkl['rms_reward'])
-            if trainer:
-                trainer.timestep = pkl['timestep']
-                trainer.iteration = pkl['iteration']
-                trainer.optimizer_critic.load_state_dict(pkl['optimizer_critic'])
+    def from_pkl(self, pkl):
+        super(DQN, self).from_pkl(pkl)
+        self.optimizer.load_state_dict(pkl['optimizer'])

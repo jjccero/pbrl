@@ -4,10 +4,11 @@ from typing import Optional, List, Type
 import numpy as np
 import torch
 from gym.spaces import Space
+
 from pbrl.algorithms.ppo.net import Actor, Critic
 from pbrl.algorithms.ppo.policy import Policy as PGPolicy
 from pbrl.algorithms.td3.net import DoubleQ
-from pbrl.common.map import auto_map
+from pbrl.common.map import auto_map, map_cpu
 
 
 class Policy(PGPolicy):
@@ -109,3 +110,18 @@ class Policy(PGPolicy):
         log_probs = dists.log_prob(sampled_actions) - torch.log(1 - torch.square(squashing_actions) + 1e-8)
         log_probs = log_probs.sum(-1)
         return squashing_actions, log_probs
+
+    def to_pkl(self):
+        pkl = super(Policy, self).to_pkl()
+        if self.q:
+            pkl['q'] = auto_map(map_cpu, self.policy.q.state_dict())
+        return pkl
+
+    def from_pkl(self, pkl):
+        super(Policy, self).from_pkl(pkl)
+        if self.q:
+            self.q.load_state_dict(pkl['q'])
+            if self.q_target:
+                self.q_target.load_state_dict(pkl['q'])
+        if self.critic_target:
+            self.critic_target.load_state_dict(pkl['critic'])

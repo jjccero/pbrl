@@ -33,7 +33,7 @@ def main():
     parser.add_argument('--obs_norm', action='store_true')
     parser.add_argument('--reward_norm', action='store_true')
 
-    parser.add_argument('--lr_critic', type=float, default=2.3e-3)
+    parser.add_argument('--lr', type=float, default=2.3e-3)
 
     args = parser.parse_args()
 
@@ -67,7 +67,7 @@ def main():
         gamma=args.gamma,
         target_freq=args.target_freq,
         repeat=args.repeat,
-        lr_critic=args.lr_critic
+        lr=args.lr
     )
 
     runner_train = Runner(

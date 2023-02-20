@@ -2,8 +2,9 @@ from typing import Optional, List, Type
 
 import torch
 from gym.spaces import Box, Discrete, Space
+
 from pbrl.algorithms.ppo.net import Actor, Critic
-from pbrl.common.map import auto_map
+from pbrl.common.map import auto_map, map_cpu
 from pbrl.policy.policy import BasePolicy
 
 
@@ -107,3 +108,15 @@ class Policy(BasePolicy):
             actions = dists.sample()
         actions = self.t2n(actions)
         return actions, states_actor
+
+    def to_pkl(self):
+        pkl = super(Policy, self).to_pkl()
+        pkl['actor'] = auto_map(map_cpu, self.actor.state_dict())
+        pkl['critic'] = auto_map(map_cpu, self.critic.state_dict() if self.critic else None)
+        return pkl
+
+    def from_pkl(self, pkl):
+        super(Policy, self).from_pkl(pkl)
+        self.actor.load_state_dict(pkl['actor'])
+        if self.critic:
+            self.critic.load_state_dict(pkl['critic'])

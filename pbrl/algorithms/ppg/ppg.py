@@ -2,10 +2,11 @@ from typing import Optional
 
 import numpy as np
 import torch
+from torch.distributions import Normal, Categorical
+
 from pbrl.algorithms.ppg.aux_buffer import AuxBuffer
 from pbrl.algorithms.ppo import PPO
-from pbrl.common.map import auto_map
-from torch.distributions import Normal, Categorical
+from pbrl.common.map import auto_map, map_cpu
 
 
 class PPG(PPO):
@@ -183,3 +184,12 @@ class PPG(PPO):
         # on-policy
         self.buffer.clear()
         return loss_info
+
+    def to_pkl(self):
+        pkl = super(PPG, self).to_pkl()
+        pkl['optimizer_aux'] = auto_map(map_cpu, self.optimizer_aux.state_dict())
+        return pkl
+
+    def from_pkl(self, pkl):
+        super(PPG, self).from_pkl(pkl)
+        self.optimizer_aux.load_state_dict(pkl['optimizer_aux'])

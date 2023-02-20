@@ -1,5 +1,3 @@
-import os
-
 import torch
 
 from pbrl.algorithms.dqn.buffer import ReplayBuffer
@@ -131,36 +129,15 @@ class SAC(Trainer):
         self.policy.actor.eval()
         return loss_info
 
-    def save(self, filename: str):
-        pkl = {
-            'timestep': self.timestep,
-            'iteration': self.iteration,
-            'log_alpha': self.log_alpha.item(),
-            'actor': self.policy.actor.state_dict(),
-            'q': self.policy.q.state_dict(),
-            'rms_obs': self.policy.rms_obs,
-            'rms_reward': self.policy.rms_reward,
-            'optimizer_actor': self.optimizer_actor.state_dict(),
-            'optimizer_q': self.optimizer_q.state_dict()
-        }
-        torch.save(auto_map(map_cpu, pkl), filename)
+    def to_pkl(self):
+        pkl = super(SAC, self).to_pkl()
+        pkl['log_alpha'] = self.log_alpha.item()
+        pkl['optimizer_actor'] = auto_map(map_cpu, self.optimizer_actor.state_dict())
+        pkl['optimizer_q'] = auto_map(map_cpu, self.optimizer_q.state_dict())
+        return pkl
 
-    @staticmethod
-    def load(filename: str, policy: Policy, trainer=None):
-        if os.path.exists(filename):
-            pkl = torch.load(filename, map_location=policy.device)
-            policy.actor.load_state_dict(pkl['actor'])
-            if policy.q:
-                policy.q.load_state_dict(pkl['q'])
-                policy.q_target.load_state_dict(pkl['q'])
-            if policy.obs_norm:
-                policy.rms_obs.load(pkl['rms_obs'])
-            if policy.reward_norm:
-                policy.rms_reward.load(pkl['rms_reward'])
-            if trainer:
-                trainer.timestep = pkl['timestep']
-                trainer.iteration = pkl['iteration']
-                trainer.log_alpha.data[:] = pkl['log_alpha']
-                trainer.optimizer_actor.load_state_dict(pkl['optimizer_actor'])
-                trainer.optimizer_critic.load_state_dict(pkl['optimizer_critic'])
-                trainer.optimizer_q.load_state_dict(pkl['optimizer_q'])
+    def from_pkl(self, pkl):
+        super(SAC, self).from_pkl(pkl)
+        self.log_alpha.data[:] = pkl['log_alpha']
+        self.optimizer_actor.load_state_dict(pkl['optimizer_actor'])
+        self.optimizer_q.load_state_dict(pkl['optimizer_q'])

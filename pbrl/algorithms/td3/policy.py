@@ -50,12 +50,13 @@ class Policy(BasePolicy):
             activation=self.activation
         )
         self.actor = actor_type(rnn=None, **config_net).to(self.device)
-        self.actor_target = copy.deepcopy(self.actor)
         self.actor.eval()
-        self.actor_target.eval()
 
+        self.actor_target = None
         self.critic_target = None
         if critic_type is not None:
+            self.actor_target = copy.deepcopy(self.actor)
+            self.actor_target.eval()
             # the critic may be centerQ
             self.critic = critic_type(**config_net).to(self.device)
             self.critic_target = copy.deepcopy(self.critic)
@@ -94,3 +95,18 @@ class Policy(BasePolicy):
         actions, states_actor = self.actor.forward(observations, states_actor)
         actions = self.t2n(actions)
         return actions, states_actor
+
+    def to_pkl(self):
+        pkl = super(Policy, self).to_pkl()
+        pkl['actor'] = auto_map(map_cpu, self.actor.state_dict())
+        pkl['critic'] = auto_map(map_cpu, self.critic.state_dict() if self.critic else None)
+        return pkl
+
+    def from_pkl(self, pkl):
+        super(Policy, self).from_pkl(pkl)
+        self.actor.load_state_dict(pkl['actor'])
+        if self.critic:
+            self.critic.load_state_dict(pkl['critic'])
+            if self.critic_target:
+                self.actor_target.load_state_dict(pkl['actor'])
+                self.critic_target.load_state_dict(pkl['critic'])
