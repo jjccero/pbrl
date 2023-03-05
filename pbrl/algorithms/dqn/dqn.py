@@ -88,7 +88,7 @@ class DQN(Trainer):
         return loss_info
 
     def to_pkl(self):
-        super(DQN, self).to_pkl()
+        pkl = super(DQN, self).to_pkl()
         pkl['optimizer'] = auto_map(map_cpu, self.optimizer.state_dict())
         return pkl
 

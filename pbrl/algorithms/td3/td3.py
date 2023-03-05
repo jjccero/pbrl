@@ -127,7 +127,7 @@ class TD3(Trainer):
         return loss_info
 
     def to_pkl(self):
-        super(TD3, self).to_pkl()
+        pkl = super(TD3, self).to_pkl()
         pkl['optimizer_actor'] = auto_map(map_cpu, self.optimizer_actor.state_dict())
         pkl['optimizer_critic'] = auto_map(map_cpu, self.optimizer_critic.state_dict())
         return pkl

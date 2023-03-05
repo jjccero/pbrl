@@ -9,7 +9,7 @@ setup(
     author='jjccero',
     url='https://github.com/jjccero/pbrl',
     license='MIT',
-    python_requires='>=3.7',
+    # python_requires='>=3.7',
     packages=find_packages(),
     install_requires=[
         'pyglet',

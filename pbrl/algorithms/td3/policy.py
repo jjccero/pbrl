@@ -6,7 +6,7 @@ import torch
 from gym.spaces import Space
 
 from pbrl.algorithms.td3.net import DeterministicActor, DoubleQ
-from pbrl.common.map import auto_map
+from pbrl.common.map import auto_map, map_cpu
 from pbrl.policy.policy import BasePolicy
 
 
